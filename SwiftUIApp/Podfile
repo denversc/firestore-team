@@ -1,0 +1,19 @@
+# Uncomment the next line to define a global platform for your project
+# platform :ios, '9.0'
+
+target 'SwiftUIApp' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+
+  # Pods for SwiftUIApp
+  # Adds a `pod name, :path => ../..` declaration to use local sources if the
+  # Podfile has been configured to operate that way.
+  # E.g. pod 'FirebaseFirestore', :path => '../..'
+
+  pod 'FirebaseAuth'
+  pod 'FirebaseUI/Auth'
+  pod 'FirebaseUI/Email'
+  pod 'FirebaseFirestore'
+  pod 'FirebaseFirestoreSwift'
+
+end
