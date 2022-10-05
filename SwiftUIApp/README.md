@@ -1,5 +1,5 @@
 ## Objective
-This repo app is built for reproduce customer issue using Swift >= 5.5 and SwiftUI.
+This repo app is built to reproduce customer issue using Swift >= 5.5 and SwiftUI.
 
 ## Usage
 
