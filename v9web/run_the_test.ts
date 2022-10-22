@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { doc, setDoc, getDoc, Firestore } from '@firebase/firestore';
+import { setDoc, getDoc, Firestore } from '@firebase/firestore';
 
 import { log } from './logging';
-import { generateValue } from './util';
+import { createDocuments, createEmptyCollection, generateValue } from './util';
 
 /**
  * Runs the test.
@@ -28,21 +28,25 @@ import { generateValue } from './util';
  * @param db the `Firestore` instance to use.
  */
 export async function runTheTest(db: Firestore) {
-  const doc_ = doc(db, 'coll/doc');
+  const collectionRef = createEmptyCollection(db, 'v9web-demo-');
+  const documentsToCreate = { doc1: { foo: generateValue() } };
+  const createdDocuments = await createDocuments(
+    collectionRef,
+    documentsToCreate
+  );
+  const documentRef = createdDocuments.doc1;
 
-  log(`getDoc(${doc_.path})`);
-  const snapshot1 = await getDoc(doc_);
-  if (snapshot1.exists()) {
-    log(`getDoc(${doc_.path}) returned: ${JSON.stringify(snapshot1.data())}`);
-  } else {
-    log(`getDoc(${doc_.path}) returned: [document does not exist]`);
-  }
+  log(`getDoc(${documentRef.id})`);
+  const snapshot1 = await getDoc(documentRef);
+  log(
+    `getDoc(${documentRef.id}) returned: ${JSON.stringify(snapshot1.data())}`
+  );
 
-  const dataToSet = { foo: generateValue() };
-  log(`setDoc(${doc_.path}, ${JSON.stringify(dataToSet)})`);
-  await setDoc(doc_, dataToSet);
+  const dataToSet = { foo: documentsToCreate.doc1.foo + '-NEW' };
+  log(`setDoc(${documentRef.id}, ${JSON.stringify(dataToSet)})`);
+  await setDoc(documentRef, dataToSet);
 
-  log(`getDoc(${doc_.path})`);
-  const snapshot = await getDoc(doc_);
-  log(`getDoc(${doc_.path}) returned: ${JSON.stringify(snapshot.data())}`);
+  log(`getDoc(${documentRef.id})`);
+  const snapshot = await getDoc(documentRef);
+  log(`getDoc(${documentRef.id}) returned: ${JSON.stringify(snapshot.data())}`);
 }

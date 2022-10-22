@@ -14,6 +14,18 @@
  * limitations under the License.
  */
 
+import {
+  collection,
+  doc,
+  writeBatch,
+  DocumentData,
+  DocumentReference,
+  CollectionReference,
+  Firestore
+} from '@firebase/firestore';
+
+import { log } from './logging';
+
 /**
  * Generates and returns a random-ish number.
  *
@@ -25,4 +37,75 @@
 export function generateValue(): string {
   const value = `${Math.round(Date.now() / 250)}`;
   return value.substring(value.length - 3);
+}
+
+/**
+ * Generates a random string suitable for a globally unique collection or
+ * document ID.
+ *
+ * @param db a Firestore instance to use.
+ * @return a randomly-generated string suitable suitable for a globally unique
+ * collection or document ID.
+ */
+export function generateUniqueResourceId(db: Firestore): string {
+  return doc(collection(db, 'dummy')).id;
+}
+
+/**
+ * Creates and returns a new, empty collection in the given Firestore database.
+ *
+ * @param db the Firestore database in which to create the collection.
+ * @param namePrefix a string to prepend to the name of the collection.
+ * @return a newly-created, empty collection in the given Firestore database.
+ */
+export function createEmptyCollection(
+  db: Firestore,
+  namePrefix?: string
+): CollectionReference {
+  const collectionId = (namePrefix ?? '') + generateUniqueResourceId(db);
+  return collection(db, collectionId);
+}
+
+export interface DocumentSpecs {
+  [docId: string]: DocumentData;
+}
+
+export type CreatedDocuments<T extends DocumentSpecs> = {
+  [P in keyof T]: DocumentReference;
+};
+
+/**
+ * Creates documents in the given Firestore collection.
+ *
+ * @param collectionRef The collection in which to create the documents.
+ * @param documentSpecs the documents to create.
+ * @return the created documents; this object will have the same keys as the
+ * given `documentSpecs` object, but with the corresponding `DocumentReference`
+ * of the document that was created.
+ */
+export async function createDocuments<T extends DocumentSpecs>(
+  collectionRef: CollectionReference,
+  documentSpecs: T
+): Promise<CreatedDocuments<T>> {
+  const writeBatch_ = writeBatch(collectionRef.firestore);
+  const createdDocuments = Object.fromEntries(
+    Object.entries(documentSpecs).map(([documentId]) => [
+      documentId,
+      doc(collectionRef, documentId)
+    ])
+  ) as CreatedDocuments<T>;
+
+  for (const [documentId, documentData] of Object.entries(documentSpecs)) {
+    const documentRef = createdDocuments[documentId];
+    log(
+      `Creating document ${documentRef.path} with contents: ${JSON.stringify(
+        documentData
+      )}`
+    );
+    writeBatch_.set(documentRef, documentData);
+  }
+
+  await writeBatch_.commit();
+
+  return createdDocuments;
 }
