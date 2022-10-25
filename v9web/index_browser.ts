@@ -24,7 +24,12 @@ import {
 
 import { firebaseConfig, isDefaultFirebaseConfig } from './firebase_config';
 import { runTheTest } from './run_the_test';
-import { clearLogs, log, logStartTime } from './logging';
+import { log, resetStartTime, setLogFunction } from './logging';
+import { clearLogs, log as browserLog } from './logging_browser';
+import { formatElapsedTime } from './util';
+
+// Initialize the logging framework.
+setLogFunction(browserLog);
 
 // The `FirebaseApp` and `Firestore` instances, stored in global variables so
 // that they can be re-used each time that the test is run.
@@ -87,7 +92,7 @@ let setLogLevelInvoked = false;
  * As an optimization, this function avoids calling `setLogLevel('info')` if
  * it knows that the log level is already 'info'.
  */
-function setLogLevelToMatchChkDebugLogging() {
+function setLogLevelToMatchChkDebugLogging(): void {
   const checked = saveCheckboxState(getUiElements().chkDebugLogging);
   if (checked || setLogLevelInvoked) {
     const logLevel = checked ? 'debug' : 'info';
@@ -101,7 +106,7 @@ function setLogLevelToMatchChkDebugLogging() {
  * Callback invoked whenever the "Enable Debug Logging" checkbox's checked state
  * changes.
  */
-function onChkDebugLoggingClick() {
+function onChkDebugLoggingClick(): void {
   // Don't bother calling `setLogLevel()` if the `Firestore` instance hasn't yet
   // been created, because setting the log level is done as part of the
   // `Firestore` instance creation in `setupFirestore()`. This allows the user
@@ -142,27 +147,11 @@ async function go(this: GlobalEventHandlers, ev: MouseEvent) {
 }
 
 /**
- * Formats an elapsed time into a human-friendly string.
- *
- * @param startTime the start time.
- * @param endTime the end time.
- * @returns A human-friendly string that indicates the amount of time that has
- * elapsed between the given `startTime` and `endTime`.
+ * Clears the logs from the UI and resets the log time back to zero.
  */
-function formatElapsedTime(
-  startTime: DOMHighResTimeStamp,
-  endTime: DOMHighResTimeStamp
-): string {
-  const milliseconds = endTime - startTime;
-  const minutes = Math.floor(milliseconds / (1000 * 60));
-  const seconds = (milliseconds - minutes * 1000 * 60) / 1000;
-
-  const formattedSeconds = seconds.toFixed(3) + 's';
-  if (minutes == 0) {
-    return formattedSeconds;
-  } else {
-    return `${minutes}m ${formattedSeconds}`;
-  }
+function clearLogsAndResetStartTime(): void {
+  clearLogs();
+  resetStartTime();
 }
 
 /**
@@ -193,7 +182,7 @@ function saveCheckboxState(checkbox: HTMLInputElement): boolean {
  *
  * @param checkbox The checkbox whose "checked" state to initialize.
  */
-function initializeCheckboxState(checkbox: HTMLInputElement) {
+function initializeCheckboxState(checkbox: HTMLInputElement): void {
   if (typeof Storage === 'undefined') {
     // Local storage is not available; nothing to do.
     return;
@@ -217,7 +206,7 @@ function initializeCheckboxState(checkbox: HTMLInputElement) {
  *
  * See `initializeCheckboxState()`.
  */
-function initializeCheckboxStates() {
+function initializeCheckboxStates(): void {
   const ui = getUiElements();
   initializeCheckboxState(ui.chkDebugLogging);
   initializeCheckboxState(ui.chkFirestoreEmulator);
@@ -246,16 +235,14 @@ function getUiElements(): UiElements {
 }
 
 /** Registers callbacks and initializes state of the HTML UI. */
-function initializeUi() {
+function initializeUi(): void {
   const ui = getUiElements();
   ui.btnRunTest.onclick = go;
-  ui.btnClearLogs.onclick = clearLogs;
+  ui.btnClearLogs.onclick = clearLogsAndResetStartTime;
   ui.chkDebugLogging.onclick = onChkDebugLoggingClick;
   initializeCheckboxStates();
 
-  log(`Click "${ui.btnRunTest.innerText}" to run the test`, {
-    t: logStartTime
-  });
+  log(`Click "${ui.btnRunTest.innerText}" to run the test`);
 }
 
 // Call initializeUi() to get everything wired up.

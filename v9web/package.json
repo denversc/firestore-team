@@ -2,10 +2,10 @@
   "name": "v9web",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "prettier": "prettier --write *.ts *.html",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "run": "ts-node index_node.ts"
   },
   "author": "",
   "license": "ISC",
@@ -18,6 +18,7 @@
     "@rollup/plugin-typescript": "^8.3.0",
     "prettier": "2.7.1",
     "rollup": "^2.67.1",
+    "ts-node": "^10.9.1",
     "typescript": "^4.5.5"
   }
 }

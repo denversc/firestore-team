@@ -3,7 +3,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import typescriptPlugin from "@rollup/plugin-typescript";
 
 export default {
-  input: "index.ts",
+  input: "index_browser.ts",
   output: {
     file: "bundle.js",
     format: "iife",

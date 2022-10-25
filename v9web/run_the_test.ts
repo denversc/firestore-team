@@ -27,7 +27,7 @@ import { createDocuments, createEmptyCollection, generateValue } from './util';
  *
  * @param db the `Firestore` instance to use.
  */
-export async function runTheTest(db: Firestore) {
+export async function runTheTest(db: Firestore): Promise<void> {
   const collectionRef = createEmptyCollection(db, 'v9web-demo-');
   const documentsToCreate = { doc1: { foo: generateValue() } };
   const createdDocuments = await createDocuments(

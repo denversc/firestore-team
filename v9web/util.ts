@@ -52,6 +52,30 @@ export function generateUniqueResourceId(db: Firestore): string {
 }
 
 /**
+ * Formats an elapsed time into a human-friendly string.
+ *
+ * @param startTime the start time.
+ * @param endTime the end time.
+ * @returns A human-friendly string that indicates the amount of time that has
+ * elapsed between the given `startTime` and `endTime`.
+ */
+export function formatElapsedTime(
+  startTime: DOMHighResTimeStamp,
+  endTime: DOMHighResTimeStamp
+): string {
+  const milliseconds = endTime - startTime;
+  const minutes = Math.floor(milliseconds / (1000 * 60));
+  const seconds = (milliseconds - minutes * 1000 * 60) / 1000;
+
+  const formattedSeconds = seconds.toFixed(3) + 's';
+  if (minutes == 0) {
+    return formattedSeconds;
+  } else {
+    return `${minutes}m ${formattedSeconds}`;
+  }
+}
+
+/**
  * Creates and returns a new, empty collection in the given Firestore database.
  *
  * @param db the Firestore database in which to create the collection.
@@ -87,7 +111,7 @@ export async function createDocuments<T extends DocumentSpecs>(
   collectionRef: CollectionReference,
   documentSpecs: T
 ): Promise<CreatedDocuments<T>> {
-  const writeBatch_ = writeBatch(collectionRef.firestore);
+  const writeBatch_ = writeBatch(collectionRef.firestore as any);
   const createdDocuments = Object.fromEntries(
     Object.entries(documentSpecs).map(([documentId]) => [
       documentId,
