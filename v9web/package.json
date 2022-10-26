@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "prettier": "prettier --write *.ts *.html",
+    "prettier": "prettier --write *.ts *.html *.json",
     "build": "rollup -c",
     "run": "ts-node index_node.ts"
   },
