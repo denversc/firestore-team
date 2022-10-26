@@ -24,6 +24,7 @@ import {
 
 import { firebaseConfig, isDefaultFirebaseConfig } from './firebase_config';
 import { runTheTest } from './run_the_test';
+import { CancellationTokenSource } from './cancellation_token';
 import { log, resetStartTime, setLogFunction } from './logging';
 import { clearLogs, log as browserLog } from './logging_browser';
 import { formatElapsedTime } from './util';
@@ -125,14 +126,20 @@ function onChkDebugLoggingClick(): void {
  * `run_the_test.ts`.
  */
 async function go(this: GlobalEventHandlers, ev: MouseEvent) {
+  const ui = getUiElements();
   const startTime: DOMHighResTimeStamp = performance.now();
   const title = (ev.currentTarget as HTMLElement).innerText;
+  const cancellationTokenSource = new CancellationTokenSource();
   log(`"${title}" started`);
   try {
+    ui.btnRunTest.disabled = true;
+    ui.btnCancelTest.disabled = false;
+    ui.btnCancelTest.onclick = (ev: MouseEvent) => {
+      log(`"${(ev.currentTarget as HTMLElement).innerText}" clicked`);
+      cancellationTokenSource.cancel();
+    };
     const db = setupFirestore();
-    if (db) {
-      await runTheTest(db);
-    }
+    await runTheTest(db, cancellationTokenSource.cancellationToken);
   } catch (e) {
     if (e instanceof Error) {
       log(`ERROR: ${e.message}`, { alsoLogToConsole: false });
@@ -140,6 +147,10 @@ async function go(this: GlobalEventHandlers, ev: MouseEvent) {
     } else {
       log(`ERROR: ${e}`);
     }
+  } finally {
+    ui.btnRunTest.disabled = false;
+    ui.btnCancelTest.disabled = true;
+    ui.btnCancelTest.onclick = null;
   }
   const endTime: DOMHighResTimeStamp = performance.now();
   const elapsedTimeStr = formatElapsedTime(startTime, endTime);
@@ -215,6 +226,7 @@ function initializeCheckboxStates(): void {
 // The HTML elements in the UI with which this script interacts.
 interface UiElements {
   btnRunTest: HTMLButtonElement;
+  btnCancelTest: HTMLButtonElement;
   btnClearLogs: HTMLButtonElement;
   chkDebugLogging: HTMLInputElement;
   chkFirestoreEmulator: HTMLInputElement;
@@ -224,6 +236,9 @@ interface UiElements {
 function getUiElements(): UiElements {
   return {
     btnRunTest: document.getElementById('btnRunTest') as HTMLButtonElement,
+    btnCancelTest: document.getElementById(
+      'btnCancelTest'
+    ) as HTMLButtonElement,
     btnClearLogs: document.getElementById('btnClearLogs') as HTMLButtonElement,
     chkDebugLogging: document.getElementById(
       'chkDebugLogging'
@@ -238,6 +253,7 @@ function getUiElements(): UiElements {
 function initializeUi(): void {
   const ui = getUiElements();
   ui.btnRunTest.onclick = go;
+  ui.btnCancelTest.disabled = true;
   ui.btnClearLogs.onclick = clearLogsAndResetStartTime;
   ui.chkDebugLogging.onclick = onChkDebugLoggingClick;
   initializeCheckboxStates();

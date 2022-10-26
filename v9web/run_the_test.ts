@@ -17,6 +17,7 @@
 import { setDoc, getDoc, Firestore } from '@firebase/firestore';
 
 import { log } from './logging';
+import { CancellationToken } from './cancellation_token';
 import { createDocuments, createEmptyCollection, generateValue } from './util';
 
 /**
@@ -26,8 +27,13 @@ import { createDocuments, createEmptyCollection, generateValue } from './util';
  * when the user clicks the "Run Test" button in the UI.
  *
  * @param db the `Firestore` instance to use.
+ * @param cancellationToken a token that can be used to terminate early in the
+ * case of a cancellation request.
  */
-export async function runTheTest(db: Firestore): Promise<void> {
+export async function runTheTest(
+  db: Firestore,
+  cancellationToken: CancellationToken
+): Promise<void> {
   const collectionRef = createEmptyCollection(db, 'v9web-demo-');
   const documentsToCreate = { doc1: { foo: generateValue() } };
   const createdDocuments = await createDocuments(
@@ -35,18 +41,22 @@ export async function runTheTest(db: Firestore): Promise<void> {
     documentsToCreate
   );
   const documentRef = createdDocuments.doc1;
+  cancellationToken.throwIfCancelled();
 
   log(`getDoc(${documentRef.id})`);
   const snapshot1 = await getDoc(documentRef);
   log(
     `getDoc(${documentRef.id}) returned: ${JSON.stringify(snapshot1.data())}`
   );
+  cancellationToken.throwIfCancelled();
 
   const dataToSet = { foo: documentsToCreate.doc1.foo + '-NEW' };
   log(`setDoc(${documentRef.id}, ${JSON.stringify(dataToSet)})`);
   await setDoc(documentRef, dataToSet);
+  cancellationToken.throwIfCancelled();
 
   log(`getDoc(${documentRef.id})`);
   const snapshot = await getDoc(documentRef);
   log(`getDoc(${documentRef.id}) returned: ${JSON.stringify(snapshot.data())}`);
+  cancellationToken.throwIfCancelled();
 }
