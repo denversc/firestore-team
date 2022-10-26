@@ -14,7 +14,22 @@
  * limitations under the License.
  */
 
-import { setDoc, getDoc, Firestore } from '@firebase/firestore';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  query,
+  runTransaction,
+  where,
+  CollectionReference,
+  DocumentReference,
+  DocumentSnapshot,
+  Firestore,
+  Query,
+  QuerySnapshot
+} from '@firebase/firestore';
 
 import { log } from './logging';
 import { CancellationToken } from './cancellation_token';
