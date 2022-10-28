@@ -99,6 +99,24 @@ export type CreatedDocuments<T extends DocumentSpecs> = {
 };
 
 /**
+ * Creates a document in the given Firestore collection.
+ *
+ * @param collectionRef The collection in which to create the documents.
+ * @param documentId the ID (name) of the document to create.
+ * @param documentData the data to populate the document with.
+ * @return the `DocumentReference` of the created document.
+ */
+export async function createDocument<T extends DocumentSpecs>(
+  collectionRef: CollectionReference,
+  documentId: string,
+  documentData: DocumentData
+): Promise<DocumentReference> {
+  return (await createDocuments(collectionRef, { [documentId]: documentData }))[
+    documentId
+  ];
+}
+
+/**
  * Creates documents in the given Firestore collection.
  *
  * @param collectionRef The collection in which to create the documents.

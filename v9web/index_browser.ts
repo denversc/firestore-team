@@ -118,6 +118,8 @@ function onChkDebugLoggingClick(): void {
   }
 }
 
+let currentCancellationTokenSource: CancellationTokenSource | null = null;
+
 /**
  * Callback invoked whenever the "Enable Debug Logging" checkbox's checked state
  * changes.
@@ -129,7 +131,13 @@ async function go(this: GlobalEventHandlers, ev: MouseEvent) {
   const ui = getUiElements();
   const startTime: DOMHighResTimeStamp = performance.now();
   const title = (ev.currentTarget as HTMLElement).innerText;
+
+  if (currentCancellationTokenSource) {
+    currentCancellationTokenSource.cancel();
+  }
   const cancellationTokenSource = new CancellationTokenSource();
+  currentCancellationTokenSource = cancellationTokenSource;
+
   log(`"${title}" started`);
   try {
     ui.btnRunTest.disabled = true;
@@ -149,8 +157,6 @@ async function go(this: GlobalEventHandlers, ev: MouseEvent) {
     }
   } finally {
     ui.btnRunTest.disabled = false;
-    ui.btnCancelTest.disabled = true;
-    ui.btnCancelTest.onclick = null;
   }
   const endTime: DOMHighResTimeStamp = performance.now();
   const elapsedTimeStr = formatElapsedTime(startTime, endTime);
