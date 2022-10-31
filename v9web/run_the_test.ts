@@ -35,7 +35,12 @@ import {
 
 import { log } from './logging';
 import { CancellationToken } from './cancellation_token';
-import { createDocuments, createEmptyCollection, generateValue } from './util';
+import {
+  createDocument,
+  createDocuments,
+  createEmptyCollection,
+  generateValue
+} from './util';
 
 /**
  * Runs the test.
@@ -52,12 +57,12 @@ export async function runTheTest(
   cancellationToken: CancellationToken
 ): Promise<void> {
   const collectionRef = createEmptyCollection(db, 'v9web-demo-');
-  const documentsToCreate = { doc1: { foo: generateValue() } };
-  const createdDocuments = await createDocuments(
+  const createdDocumentData = { foo: generateValue() };
+  const documentRef = await createDocument(
     collectionRef,
-    documentsToCreate
+    'doc1',
+    createdDocumentData
   );
-  const documentRef = createdDocuments.doc1;
   cancellationToken.throwIfCancelled();
 
   log(`getDoc(${documentRef.id})`);
@@ -67,7 +72,7 @@ export async function runTheTest(
   );
   cancellationToken.throwIfCancelled();
 
-  const dataToSet = { foo: documentsToCreate.doc1.foo + '-NEW' };
+  const dataToSet = { foo: createdDocumentData.foo + '-NEW' };
   log(`setDoc(${documentRef.id}, ${JSON.stringify(dataToSet)})`);
   await setDoc(documentRef, dataToSet);
   cancellationToken.throwIfCancelled();

@@ -43,9 +43,8 @@ interface SetupFirestoreOptions {
  * The first invocation of this method will create the `Firestore` object, and
  * subsequent invocations will return the same `Firestore` instance.
  */
-function setupFirestore(options?: Partial<SetupFirestoreOptions>): Firestore {
-  const useFirestoreEmulator = options?.useFirestoreEmulator ?? false;
-  const debugLoggingEnabled = options?.debugLoggingEnabled ?? false;
+function setupFirestore(options: SetupFirestoreOptions): Firestore {
+  const { useFirestoreEmulator, debugLoggingEnabled } = options;
 
   // Verify that the `FirestoreOptions` are set to something other than the
   // defaults if the Firestore emulator is not being used. The default options

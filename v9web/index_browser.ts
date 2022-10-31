@@ -48,12 +48,12 @@ function setupFirestore(): Firestore {
     return db;
   }
 
-  const ui = getUiElements();
+  const { chkFirestoreEmulator } = getUiElements();
 
   // Verify that the `FirestoreOptions` are set to something other than the
   // defaults if the Firestore emulator is not being used. The default options
   // work with the emulator, but will cause strange errors if used against prod.
-  const useFirestoreEmulator = saveCheckboxState(ui.chkFirestoreEmulator);
+  const useFirestoreEmulator = saveCheckboxState(chkFirestoreEmulator);
   if (isDefaultFirebaseConfig(firebaseConfig) && !useFirestoreEmulator) {
     throw new Error(
       'The values of firebaseConfig in firebase_config.ts need to be set' +
@@ -64,7 +64,7 @@ function setupFirestore(): Firestore {
   // Disable the "Use Firestore Emulator" checkbox because once the `Firestore`
   // object is created then it's too late to change your mind about using the
   // Firestore emulator or prod.
-  ui.chkFirestoreEmulator.disabled = true;
+  chkFirestoreEmulator.disabled = true;
 
   if (!app) {
     log(`initializeApp(${firebaseConfig.projectId})`);
@@ -94,7 +94,8 @@ let setLogLevelInvoked = false;
  * it knows that the log level is already 'info'.
  */
 function setLogLevelToMatchChkDebugLogging(): void {
-  const checked = saveCheckboxState(getUiElements().chkDebugLogging);
+  const { chkDebugLogging } = getUiElements();
+  const checked = saveCheckboxState(chkDebugLogging);
   if (checked || setLogLevelInvoked) {
     const logLevel = checked ? 'debug' : 'info';
     log(`setLogLevel(${logLevel})`);
@@ -128,7 +129,7 @@ let currentCancellationTokenSource: CancellationTokenSource | null = null;
  * `run_the_test.ts`.
  */
 async function go(this: GlobalEventHandlers, ev: MouseEvent) {
-  const ui = getUiElements();
+  const { btnRunTest, btnCancelTest } = getUiElements();
   const startTime: DOMHighResTimeStamp = performance.now();
   const title = (ev.currentTarget as HTMLElement).innerText;
 
@@ -140,9 +141,9 @@ async function go(this: GlobalEventHandlers, ev: MouseEvent) {
 
   log(`"${title}" started`);
   try {
-    ui.btnRunTest.disabled = true;
-    ui.btnCancelTest.disabled = false;
-    ui.btnCancelTest.onclick = (ev: MouseEvent) => {
+    btnRunTest.disabled = true;
+    btnCancelTest.disabled = false;
+    btnCancelTest.onclick = (ev: MouseEvent) => {
       log(`"${(ev.currentTarget as HTMLElement).innerText}" clicked`);
       cancellationTokenSource.cancel();
     };
@@ -156,7 +157,7 @@ async function go(this: GlobalEventHandlers, ev: MouseEvent) {
       log(`ERROR: ${e}`);
     }
   } finally {
-    ui.btnRunTest.disabled = false;
+    btnRunTest.disabled = false;
   }
   const endTime: DOMHighResTimeStamp = performance.now();
   const elapsedTimeStr = formatElapsedTime(startTime, endTime);
@@ -224,9 +225,9 @@ function initializeCheckboxState(checkbox: HTMLInputElement): void {
  * See `initializeCheckboxState()`.
  */
 function initializeCheckboxStates(): void {
-  const ui = getUiElements();
-  initializeCheckboxState(ui.chkDebugLogging);
-  initializeCheckboxState(ui.chkFirestoreEmulator);
+  const { chkDebugLogging, chkFirestoreEmulator } = getUiElements();
+  initializeCheckboxState(chkDebugLogging);
+  initializeCheckboxState(chkFirestoreEmulator);
 }
 
 // The HTML elements in the UI with which this script interacts.
@@ -257,14 +258,15 @@ function getUiElements(): UiElements {
 
 /** Registers callbacks and initializes state of the HTML UI. */
 function initializeUi(): void {
-  const ui = getUiElements();
-  ui.btnRunTest.onclick = go;
-  ui.btnCancelTest.disabled = true;
-  ui.btnClearLogs.onclick = clearLogsAndResetStartTime;
-  ui.chkDebugLogging.onclick = onChkDebugLoggingClick;
+  const { btnRunTest, btnCancelTest, btnClearLogs, chkDebugLogging } =
+    getUiElements();
+  btnRunTest.onclick = go;
+  btnCancelTest.disabled = true;
+  btnClearLogs.onclick = clearLogsAndResetStartTime;
+  chkDebugLogging.onclick = onChkDebugLoggingClick;
   initializeCheckboxStates();
 
-  log(`Click "${ui.btnRunTest.innerText}" to run the test`);
+  log(`Click "${btnRunTest.innerText}" to run the test`);
 }
 
 // Call initializeUi() to get everything wired up.
