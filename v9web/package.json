@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "prettier": "prettier --write *.ts *.html *.json",
+    "prettier": "prettier --write **/*.js **/*.ts **/*.html **/*.json !package-lock.json !dist/**",
     "build": "rollup -c",
-    "run": "ts-node index_node.ts"
+    "run": "ts-node src/index_node.ts"
   },
   "author": "",
   "license": "ISC",

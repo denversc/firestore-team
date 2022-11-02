@@ -1,17 +1,13 @@
-import resolve from "@rollup/plugin-node-resolve";
-import commonjs from "@rollup/plugin-commonjs";
-import typescriptPlugin from "@rollup/plugin-typescript";
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import typescriptPlugin from '@rollup/plugin-typescript';
 
 export default {
-  input: "index_browser.ts",
+  input: 'src/index_browser.ts',
   output: {
-    file: "bundle.js",
-    format: "iife",
-    sourcemap: true,
+    file: 'dist/bundle.browser.js',
+    format: 'iife',
+    sourcemap: true
   },
-  plugins: [
-    resolve(),
-    typescriptPlugin(),
-    commonjs(),
-  ],
+  plugins: [resolve(), typescriptPlugin(), commonjs()]
 };

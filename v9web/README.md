@@ -1,9 +1,9 @@
 ## Common Setup for both Browser and Node
 
 1. Run `npm install` to install dependencies.
-2. Edit `firebase_config.ts` to fill out your `apiKey` and `projectId`
+2. Edit `src/firebase_config.ts` to fill out your `apiKey` and `projectId`
    (not required if you only want to use the Firestore emulator).
-3. Edit `run_the_test.ts` to run whatever code you want to run.
+3. Edit `src/run_the_test.ts` to run whatever code you want to run.
 
 ## Run in a Browser
 
