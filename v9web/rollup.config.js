@@ -9,5 +9,9 @@ export default {
     format: 'iife',
     sourcemap: true
   },
-  plugins: [resolve(), typescriptPlugin(), commonjs()]
+  plugins: [
+    resolve(),
+    typescriptPlugin({ exclude: '**/*_node.ts' }),
+    commonjs()
+  ]
 };
