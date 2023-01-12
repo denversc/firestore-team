@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "module": "es2020",
+    "moduleResolution": "node",
+    "outDir": "build",
     "strict": true,
     "target": "es5"
   }
