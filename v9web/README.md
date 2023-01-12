@@ -18,6 +18,7 @@ To connect to the Firestore emulator, specify `-e`.
 To enable Firestore debug logging, specify `-v`.
 
 Example:
+
 ```
 npm run run -- -e -v
 ```
@@ -30,4 +31,19 @@ yarn build:debug
 yarn pack  # this resulted in a tar file (e.g. firebase-firestore-v3.4.4.tgz)
 cd ~/firestore-team/v9web
 npm install firebase-firestore-v3.4.4.tgz
+```
+
+## Formatting Code
+
+This repository uses "prettier" to format the code.
+To run the code formatter, simply run
+
+```
+npm run prettier
+```
+
+or
+
+```
+yarn prettier
 ```
