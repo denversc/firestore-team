@@ -6,7 +6,7 @@ export default {
   input: 'src/index_browser.ts',
   output: {
     file: 'dist/bundle.browser.js',
-    format: 'iife',
+    format: 'es',
     sourcemap: true
   },
   plugins: [

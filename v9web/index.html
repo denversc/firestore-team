@@ -16,6 +16,7 @@ limitations under the License.
 <html lang="en">
   <head>
     <link rel="icon" type="image/png" href="resources/firebase_28dp.png" />
+    <script id="scriptMain" type="module" src="dist/bundle.browser.js"></script>
   </head>
   <body>
     <p>
@@ -33,6 +34,45 @@ limitations under the License.
 
     <p id="logPara" style="font-family: 'Lucida Console', monospace"></p>
 
-    <script src="dist/bundle.browser.js"></script>
+    <!-- The "div" that is revealed if there is an error loading the JavaScript library. -->
+    <div id="divScriptLoadError" hidden>
+      <p style="color: darkred">
+        <strong>
+          Loading the compiled JavaScript module
+          <span id="spanJavascriptModuleSrc"></span>
+          failed.
+        </strong>
+        <br />
+        Check the JavaScript console logs for details.
+        <br />
+        If you opened index.html directly then this won't work because loading
+        JavaScript modules via file:/// URLs causes a CORS error.
+        <br />
+        To fix this, serve the web site with an HTTP server.
+        <br />
+        To quickly start an HTTP server run
+        <br />
+        <code>npm run serve</code>
+        <br />
+        or
+        <br />
+        <code>yarn serve</code>
+        <br />
+        then browse to
+        <a href="http://localhost:9080">http://localhost:9080</a>.
+      </p>
+    </div>
+
+    <!-- Show an error if loading the main JavaScript module failed. -->
+    <script>
+      (function () {
+        const mainScriptElement = document.getElementById('scriptMain');
+        mainScriptElement.onerror = () => {
+          document.getElementById('spanJavascriptModuleSrc').innerText =
+            mainScriptElement.src;
+          document.getElementById('divScriptLoadError').hidden = false;
+        };
+      })();
+    </script>
   </body>
 </html>

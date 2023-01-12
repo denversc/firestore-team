@@ -33,14 +33,14 @@ import {
   QuerySnapshot
 } from '@firebase/firestore';
 
-import { log } from './logging';
-import { CancellationToken } from './cancellation_token';
+import { log } from './logging.js';
+import { CancellationToken } from './cancellation_token.js';
 import {
   createDocument,
   createDocuments,
   createEmptyCollection,
   generateValue
-} from './util';
+} from './util.js';
 
 /**
  * Runs the test.

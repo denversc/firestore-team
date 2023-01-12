@@ -22,12 +22,12 @@ import {
   setLogLevel
 } from '@firebase/firestore';
 
-import { firebaseConfig, isDefaultFirebaseConfig } from './firebase_config';
-import { runTheTest } from './run_the_test';
-import { CancellationTokenSource } from './cancellation_token';
-import { log, setLogFunction } from './logging';
-import { log as nodeLog } from './logging_node';
-import { formatElapsedTime } from './util';
+import { firebaseConfig, isDefaultFirebaseConfig } from './firebase_config.js';
+import { runTheTest } from './run_the_test.js';
+import { CancellationTokenSource } from './cancellation_token.js';
+import { log, setLogFunction } from './logging.js';
+import { log as nodeLog } from './logging_node.js';
+import { formatElapsedTime } from './util.js';
 
 // Initialize the logging framework.
 setLogFunction(nodeLog);

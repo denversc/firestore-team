@@ -5,21 +5,25 @@
   "scripts": {
     "prettier": "prettier --write .",
     "build": "rollup -c",
-    "run": "ts-node src/index_node.ts"
+    "serve": "static-server",
+    "run": "ts-node --esm src/index_node.ts"
   },
   "author": "",
   "license": "ISC",
+  "type": "module",
   "dependencies": {
-    "firebase": "^9.6.6"
+    "firebase": "^9.6.6",
+    "ts-closure-library": "^2022.5.0-2.3"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^21.0.1",
-    "@rollup/plugin-node-resolve": "^13.1.3",
-    "@rollup/plugin-typescript": "^8.3.0",
+    "@rollup/plugin-commonjs": "^24.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-typescript": "^11.0.0",
     "@types/node": "^18.11.18",
     "prettier": "2.7.1",
-    "rollup": "^2.67.1",
+    "rollup": "^3.9.1",
+    "static-server": "^2.2.1",
     "ts-node": "^10.9.1",
-    "typescript": "^4.5.5"
+    "typescript": "^4.9.4"
   }
 }

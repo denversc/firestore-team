@@ -24,7 +24,7 @@ import {
   Firestore
 } from '@firebase/firestore';
 
-import { log } from './logging';
+import { log } from './logging.js';
 
 /**
  * Generates and returns a random-ish number.
