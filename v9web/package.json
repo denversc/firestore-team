@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "prettier": "prettier --write .",
+    "prettier:check": "prettier --check .",
     "build": "rollup -c",
     "serve": "static-server",
     "run": "ts-node --esm src/index_node.ts",
