@@ -19,7 +19,8 @@ import {
   connectFirestoreEmulator,
   Firestore,
   getFirestore,
-  setLogLevel
+  setLogLevel,
+  terminate
 } from '@firebase/firestore';
 
 import { firebaseConfig, isDefaultFirebaseConfig } from './firebase_config.js';
@@ -140,7 +141,12 @@ async function go() {
   log(`Test Started`);
   try {
     const db = setupFirestore(setupFirestoreOptions);
-    await runTheTest(db, cancellationToken);
+    try {
+      await runTheTest(db, cancellationToken);
+    } finally {
+      log("Terminating Firestore");
+      await terminate(db);
+    }
   } catch (e) {
     if (e instanceof Error) {
       log(`ERROR: ${e.message}`, { alsoLogToConsole: false });

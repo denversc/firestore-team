@@ -6,7 +6,8 @@
     "prettier": "prettier --write .",
     "build": "rollup -c",
     "serve": "static-server",
-    "run": "ts-node --esm src/index_node.ts"
+    "run": "ts-node --esm src/index_node.ts",
+    "tsc": "tsc"
   },
   "author": "",
   "license": "ISC",

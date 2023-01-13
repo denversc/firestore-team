@@ -1,0 +1,72 @@
+name: v9web_presubmits
+
+on: [pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_test:
+    continue-on-error: false
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: node install
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - name: java install
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: setup dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec 2>&1
+          set -xv
+
+          node --version
+          java -version
+
+          npm install -g yarn
+          yarn --version
+
+          npm install -g firebase-tools
+          firebase --version
+
+          cd v9web
+          yarn
+
+      - name: compile all files with tsc
+        shell: bash
+        run: cd v9web && yarn tsc
+
+      - name: build browser bundle with rollup
+        shell: bash
+        run: cd v9web && yarn build
+
+      - name: test with node
+        shell: bash
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+          exec 2>&1
+          set -xv
+
+          cd v9web
+
+          readonly PROJECT_ID="$(grep projectId: src/firebase_config.ts | gawk -F\' '{print $2}' -)"
+
+          exec \
+            firebase \
+            emulators:exec \
+            --only firestore \
+            --project "${PROJECT_ID}" \
+            'yarn run run -e'
