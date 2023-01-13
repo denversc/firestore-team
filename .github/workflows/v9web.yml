@@ -17,7 +17,7 @@ jobs:
       - name: node install
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 16
 
       - name: java install
         uses: actions/setup-java@v3
@@ -25,7 +25,24 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: setup dependencies
+      - name: get node version
+        id: get-node-version
+        shell: bash
+        run: echo "::set-output name=version::$(node --version)"
+
+      - name: cache node dependencies
+        uses: actions/cache@v3
+        with:
+          path: v9web/node_modules
+          key: ${{ runner.os }}-${{ steps.get-node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
+
+      - name: cache firestore emulator
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/.cache/firebase/emulators
+          key: ${{ runner.os }}-${{ hashFiles('v9web/yarn.lock') }}
+
+      - name: install dependencies
         shell: bash
         run: |
           set -euo pipefail
@@ -38,11 +55,10 @@ jobs:
           npm install -g yarn
           yarn --version
 
-          npm install -g firebase-tools
-          firebase --version
-
           cd v9web
-          yarn
+          yarn install --frozen-lockfile
+
+          $(yarn bin firebase) --version
 
       - name: compile all files with tsc
         shell: bash
@@ -55,18 +71,4 @@ jobs:
       - name: test with node
         shell: bash
         timeout-minutes: 1
-        run: |
-          set -euo pipefail
-          exec 2>&1
-          set -xv
-
-          cd v9web
-
-          readonly PROJECT_ID="$(grep projectId: src/firebase_config.ts | gawk -F\' '{print $2}' -)"
-
-          exec \
-            firebase \
-            emulators:exec \
-            --only firestore \
-            --project "${PROJECT_ID}" \
-            'yarn run run -e'
+        run: cd v9web && yarn run:emulator

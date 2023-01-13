@@ -2,5 +2,4 @@
 /build/
 /dist/
 /node_modules/
-/package-lock.json
-/yarn.lock
+firestore-debug.log

@@ -7,6 +7,7 @@
     "build": "rollup -c",
     "serve": "static-server",
     "run": "ts-node --esm src/index_node.ts",
+    "run:emulator": "firebase emulators:exec --only firestore --project \"$(grep projectId: src/firebase_config.ts | gawk -F\\' '{print $2}' -)\" 'yarn run run -e'",
     "tsc": "tsc"
   },
   "author": "",
@@ -14,6 +15,7 @@
   "type": "module",
   "dependencies": {
     "firebase": "^9.6.6",
+    "firebase-tools": "^11.20.0",
     "ts-closure-library": "^2022.5.0-2.3"
   },
   "devDependencies": {

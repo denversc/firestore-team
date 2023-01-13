@@ -144,7 +144,7 @@ async function go() {
     try {
       await runTheTest(db, cancellationToken);
     } finally {
-      log("Terminating Firestore");
+      log('Terminating Firestore');
       await terminate(db);
     }
   } catch (e) {
