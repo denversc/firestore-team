@@ -1,11 +1,7 @@
 {% extends "job.yml.njk" %}
 
-{%block name %}
-  tsc:
-{% endblock %}
+{%block name %}tsc{% endblock %}
 
 {%block steps %}
-      - name: yarn tsc
-        shell: bash
-        run: cd v9web && yarn tsc
+      - run: npm run tsc
 {% endblock %}

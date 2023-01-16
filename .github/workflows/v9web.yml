@@ -3,11 +3,22 @@
 # Any changes made to this file will be lost the next time that it is generated.
 # Instead, modify the template and regenerate this file by running:
 #
-#   cd v9web && yarn gha:generate
+#   cd v9web && npm run gha:generate
 
 name: v9web
 
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - 'v9web/**'
+      - '.github/workflows/v9web.yml'
+  schedule:
+    - cron: '0 11 * * *' # Run nightly at 11am UTC (3am Pacific, 6am Eastern)
+
+defaults:
+  run:
+    shell: bash
+    working-directory: v9web
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -16,7 +27,6 @@ concurrency:
 jobs:
 
   tsc:
-
     continue-on-error: false
     runs-on: ubuntu-latest
 
@@ -27,40 +37,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: npm
+          cache-dependency-path: v9web/package-lock.json
 
-      - name: node version
-        id: node-version
-        shell: bash
-        run: |
-          echo "version=$(node --version)"
-          echo "version=$(node --version)" >>$GITHUB_OUTPUT
+      - run: npm clean-install
 
-      - name: cache node dependencies
-        uses: actions/cache@v3
-        with:
-          path: v9web/node_modules
-          key: ${{ runner.os }}-${{ steps.node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
-
-      - name: install node dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          exec 2>&1
-          set -xv
-
-          npm install -g yarn
-          yarn --version
-
-          cd v9web
-          yarn install --frozen-lockfile
-
-      - name: yarn tsc
-        shell: bash
-        run: cd v9web && yarn tsc
-
+      - run: npm run tsc
 
   rollup:
-
     continue-on-error: false
     runs-on: ubuntu-latest
 
@@ -71,40 +55,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: npm
+          cache-dependency-path: v9web/package-lock.json
 
-      - name: node version
-        id: node-version
-        shell: bash
-        run: |
-          echo "version=$(node --version)"
-          echo "version=$(node --version)" >>$GITHUB_OUTPUT
+      - run: npm clean-install
 
-      - name: cache node dependencies
-        uses: actions/cache@v3
-        with:
-          path: v9web/node_modules
-          key: ${{ runner.os }}-${{ steps.node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
-
-      - name: install node dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          exec 2>&1
-          set -xv
-
-          npm install -g yarn
-          yarn --version
-
-          cd v9web
-          yarn install --frozen-lockfile
-
-      - name: yarn build
-        shell: bash
-        run: cd v9web && yarn build
-
+      - run: npm run build
 
   node_run:
-
     continue-on-error: false
     runs-on: ubuntu-latest
 
@@ -115,32 +73,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: npm
+          cache-dependency-path: v9web/package-lock.json
 
-      - name: node version
-        id: node-version
-        shell: bash
-        run: |
-          echo "version=$(node --version)"
-          echo "version=$(node --version)" >>$GITHUB_OUTPUT
-
-      - name: cache node dependencies
-        uses: actions/cache@v3
-        with:
-          path: v9web/node_modules
-          key: ${{ runner.os }}-${{ steps.node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
-
-      - name: install node dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          exec 2>&1
-          set -xv
-
-          npm install -g yarn
-          yarn --version
-
-          cd v9web
-          yarn install --frozen-lockfile
+      - run: npm clean-install
 
       - name: java install
         uses: actions/setup-java@v3
@@ -148,24 +84,16 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: java version
-        shell: bash
-        run: java -version
-
       - name: cache firestore emulator
         uses: actions/cache@v3
         with:
           path: /home/runner/.cache/firebase/emulators
-          key: ${{ runner.os }}-${{ hashFiles('v9web/yarn.lock') }}
+          key: firestore_emulator-${{ runner.os }}-${{ hashFiles('v9web/package-json.lock') }}
 
-      - name: yarn run:emulator
-        shell: bash
+      - run: npm run run:emulator
         timeout-minutes: 1
-        run: cd v9web && yarn run:emulator
-
 
   prettier:
-
     continue-on-error: false
     runs-on: ubuntu-latest
 
@@ -176,34 +104,44 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: npm
+          cache-dependency-path: v9web/package-lock.json
 
-      - name: node version
-        id: node-version
-        shell: bash
-        run: |
-          echo "version=$(node --version)"
-          echo "version=$(node --version)" >>$GITHUB_OUTPUT
+      - run: npm clean-install
 
-      - name: cache node dependencies
-        uses: actions/cache@v3
+      - run: npm run prettier:check
+
+  validate_v9web_yml:
+    continue-on-error: false
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: node install
+        uses: actions/setup-node@v3
         with:
-          path: v9web/node_modules
-          key: ${{ runner.os }}-${{ steps.node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
+          node-version: 16
+          cache: npm
+          cache-dependency-path: v9web/package-lock.json
 
-      - name: install node dependencies
-        shell: bash
+      - run: npm clean-install
+
+      - name: npm run gha:generate
+        id: gha_generate
         run: |
-          set -euo pipefail
-          exec 2>&1
-          set -xv
+          readonly GENERATED_FILE=${{ runner.temp }}/v9web.yml.generated
+          npm run gha:generate -- -o ${GENERATED_FILE}
+          echo "generated_file=${GENERATED_FILE}" >>$GITHUB_OUTPUT
 
-          npm install -g yarn
-          yarn --version
-
-          cd v9web
-          yarn install --frozen-lockfile
-
-      - name: yarn prettier:check
-        shell: bash
-        run: cd v9web && yarn prettier:check
+      - name: diff generated v9web.yml
+        run: |
+          if diff ../.github/workflows/v9web.yml ${{ steps.gha_generate.outputs.generated_file }} ; then
+            echo "Validation completed successfully: the generated v9web.yml does _not_ differ from the one checked into Git."
+          else
+            echo "ERROR: The generated v9web.yml differs from the one checked into Git."
+            echo "To fix, regenerate v9web.yml by running"
+            echo "cd v9web && npm run gha:generate"
+            exit 1
+          fi
 

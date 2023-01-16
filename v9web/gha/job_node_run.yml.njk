@@ -1,8 +1,6 @@
 {% extends "job.yml.njk" %}
 
-{%block name %}
-  node_run:
-{% endblock %}
+{%block name %}node_run{% endblock %}
 
 {%block steps %}
       - name: java install
@@ -11,18 +9,12 @@
           distribution: 'temurin'
           java-version: '17'
 
-      - name: java version
-        shell: bash
-        run: java -version
-
       - name: cache firestore emulator
         uses: actions/cache@v3
         with:
           path: /home/runner/.cache/firebase/emulators
-          key: ${{ runner.os }}-${{ hashFiles('v9web/yarn.lock') }}
+          key: firestore_emulator-${{ runner.os }}-${{ hashFiles('v9web/package-json.lock') }}
 
-      - name: yarn run:emulator
-        shell: bash
+      - run: npm run run:emulator
         timeout-minutes: 1
-        run: cd v9web && yarn run:emulator
 {% endblock %}

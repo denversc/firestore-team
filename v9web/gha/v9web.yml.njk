@@ -3,18 +3,31 @@
 # Any changes made to this file will be lost the next time that it is generated.
 # Instead, modify the template and regenerate this file by running:
 #
-#   cd v9web && yarn gha:generate
+#   cd v9web && npm run gha:generate
 
 name: v9web
 
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - 'v9web/**'
+      - '.github/workflows/v9web.yml'
+  schedule:
+    - cron: '0 11 * * *' # Run nightly at 11am UTC (3am Pacific, 6am Eastern)
+
+defaults:
+  run:
+    shell: bash
+    working-directory: v9web
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
+
 {% include "job_tsc.yml.njk" %}
 {% include "job_rollup.yml.njk" %}
 {% include "job_node_run.yml.njk" %}
 {% include "job_prettier.yml.njk" %}
+{% include "job_validate_generated_yml.yml.njk" %}

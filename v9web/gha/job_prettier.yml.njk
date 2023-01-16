@@ -1,11 +1,7 @@
 {% extends "job.yml.njk" %}
 
-{%block name %}
-  prettier:
-{% endblock %}
+{%block name %}prettier{% endblock %}
 
 {%block steps %}
-      - name: yarn prettier:check
-        shell: bash
-        run: cd v9web && yarn prettier:check
+      - run: npm run prettier:check
 {% endblock %}

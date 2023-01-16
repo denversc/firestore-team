@@ -1,0 +1,23 @@
+{% extends "job.yml.njk" %}
+
+{%block name %}validate_v9web_yml{% endblock %}
+
+{%block steps %}
+      - name: npm run gha:generate
+        id: gha_generate
+        run: |
+          readonly GENERATED_FILE=${{ runner.temp }}/v9web.yml.generated
+          npm run gha:generate -- -o ${GENERATED_FILE}
+          echo "generated_file=${GENERATED_FILE}" >>$GITHUB_OUTPUT
+
+      - name: diff generated v9web.yml
+        run: |
+          if diff ../.github/workflows/v9web.yml ${{ steps.gha_generate.outputs.generated_file }} ; then
+            echo "Validation completed successfully: the generated v9web.yml does _not_ differ from the one checked into Git."
+          else
+            echo "ERROR: The generated v9web.yml differs from the one checked into Git."
+            echo "To fix, regenerate v9web.yml by running"
+            echo "cd v9web && npm run gha:generate"
+            exit 1
+          fi
+{% endblock %}

@@ -1,4 +1,4 @@
-{% block name -%}{%- endblock %}
+  {% block name -%}{%- endblock %}:
     continue-on-error: false
     runs-on: ubuntu-latest
 
@@ -9,30 +9,8 @@
         uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: npm
+          cache-dependency-path: v9web/package-lock.json
 
-      - name: node version
-        id: node-version
-        shell: bash
-        run: |
-          echo "version=$(node --version)"
-          echo "version=$(node --version)" >>$GITHUB_OUTPUT
-
-      - name: cache node dependencies
-        uses: actions/cache@v3
-        with:
-          path: v9web/node_modules
-          key: ${{ runner.os }}-${{ steps.node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
-
-      - name: install node dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          exec 2>&1
-          set -xv
-
-          npm install -g yarn
-          yarn --version
-
-          cd v9web
-          yarn install --frozen-lockfile
+      - run: npm clean-install
 {% block steps -%}{%- endblock -%}

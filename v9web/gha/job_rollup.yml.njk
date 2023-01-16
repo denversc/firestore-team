@@ -1,11 +1,7 @@
 {% extends "job.yml.njk" %}
 
-{%block name %}
-  rollup:
-{% endblock %}
+{%block name %}rollup{% endblock %}
 
 {%block steps %}
-      - name: yarn build
-        shell: bash
-        run: cd v9web && yarn build
+      - run: npm run build
 {% endblock %}
