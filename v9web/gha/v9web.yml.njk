@@ -1,0 +1,20 @@
+# WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+# This file is generated from <$ srcFile $>
+# Any changes made to this file will be lost the next time that it is generated.
+# Instead, modify the template and regenerate this file by running:
+#
+#   cd v9web && yarn gha:generate
+
+name: v9web
+
+on: [pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+{% include "job_tsc.yml.njk" %}
+{% include "job_rollup.yml.njk" %}
+{% include "job_node_run.yml.njk" %}
+{% include "job_prettier.yml.njk" %}

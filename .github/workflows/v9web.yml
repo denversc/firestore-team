@@ -1,4 +1,11 @@
-name: v9web_presubmits
+# WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+# This file is generated from gha/v9web.yml.njk
+# Any changes made to this file will be lost the next time that it is generated.
+# Instead, modify the template and regenerate this file by running:
+#
+#   cd v9web && yarn gha:generate
+
+name: v9web
 
 on: [pull_request]
 
@@ -7,7 +14,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
+
+  tsc:
+
     continue-on-error: false
     runs-on: ubuntu-latest
 
@@ -19,16 +28,12 @@ jobs:
         with:
           node-version: 16
 
-      - name: java install
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: get node version
-        id: get-node-version
+      - name: node version
+        id: node-version
         shell: bash
-        run: echo "::set-output name=version::$(node --version)"
+        run: |
+          node --version
+          echo "::set-output name=version::$(node --version)"
 
       - name: cache node dependencies
         uses: actions/cache@v3
@@ -36,21 +41,12 @@ jobs:
           path: v9web/node_modules
           key: ${{ runner.os }}-${{ steps.get-node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
 
-      - name: cache firestore emulator
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cache/firebase/emulators
-          key: ${{ runner.os }}-${{ hashFiles('v9web/yarn.lock') }}
-
-      - name: install dependencies
+      - name: install node dependencies
         shell: bash
         run: |
           set -euo pipefail
           exec 2>&1
           set -xv
-
-          node --version
-          java -version
 
           npm install -g yarn
           yarn --version
@@ -58,21 +54,156 @@ jobs:
           cd v9web
           yarn install --frozen-lockfile
 
-          $(yarn bin firebase) --version
-
-      - name: compile all files with tsc
+      - name: yarn tsc
         shell: bash
         run: cd v9web && yarn tsc
 
-      - name: build browser bundle with rollup
+
+  rollup:
+
+    continue-on-error: false
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: node install
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: node version
+        id: node-version
+        shell: bash
+        run: |
+          node --version
+          echo "::set-output name=version::$(node --version)"
+
+      - name: cache node dependencies
+        uses: actions/cache@v3
+        with:
+          path: v9web/node_modules
+          key: ${{ runner.os }}-${{ steps.get-node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
+
+      - name: install node dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec 2>&1
+          set -xv
+
+          npm install -g yarn
+          yarn --version
+
+          cd v9web
+          yarn install --frozen-lockfile
+
+      - name: yarn build
         shell: bash
         run: cd v9web && yarn build
 
-      - name: test with node
+
+  node_run:
+
+    continue-on-error: false
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: node install
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: node version
+        id: node-version
+        shell: bash
+        run: |
+          node --version
+          echo "::set-output name=version::$(node --version)"
+
+      - name: cache node dependencies
+        uses: actions/cache@v3
+        with:
+          path: v9web/node_modules
+          key: ${{ runner.os }}-${{ steps.get-node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
+
+      - name: install node dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec 2>&1
+          set -xv
+
+          npm install -g yarn
+          yarn --version
+
+          cd v9web
+          yarn install --frozen-lockfile
+
+      - name: java install
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: java version
+        shell: bash
+        run: java -version
+
+      - name: cache firestore emulator
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/.cache/firebase/emulators
+          key: ${{ runner.os }}-${{ hashFiles('v9web/yarn.lock') }}
+
+      - name: yarn run:emulator
         shell: bash
         timeout-minutes: 1
         run: cd v9web && yarn run:emulator
 
-      - name: check code formatting
+
+  prettier:
+
+    continue-on-error: false
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: node install
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: node version
+        id: node-version
+        shell: bash
+        run: |
+          node --version
+          echo "::set-output name=version::$(node --version)"
+
+      - name: cache node dependencies
+        uses: actions/cache@v3
+        with:
+          path: v9web/node_modules
+          key: ${{ runner.os }}-${{ steps.get-node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
+
+      - name: install node dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec 2>&1
+          set -xv
+
+          npm install -g yarn
+          yarn --version
+
+          cd v9web
+          yarn install --frozen-lockfile
+
+      - name: yarn prettier:check
         shell: bash
         run: cd v9web && yarn prettier:check
+

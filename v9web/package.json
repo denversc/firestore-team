@@ -9,7 +9,8 @@
     "serve": "static-server",
     "run": "ts-node --esm src/index_node.ts",
     "run:emulator": "firebase emulators:exec --only firestore --project \"$(grep projectId: src/firebase_config.ts | gawk -F\\' '{print $2}' -)\" 'yarn run run -e'",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "gha:generate": "ts-node --esm gha/compile.ts"
   },
   "author": "",
   "license": "ISC",
@@ -24,6 +25,7 @@
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-typescript": "^11.0.0",
     "@types/node": "^18.11.18",
+    "nunjucks": "^3.2.3",
     "prettier": "2.7.1",
     "rollup": "^3.9.1",
     "static-server": "^2.2.1",
