@@ -14,14 +14,14 @@
         id: node-version
         shell: bash
         run: |
-          node --version
-          echo "::set-output name=version::$(node --version)"
+          echo "version=$(node --version)"
+          echo "version=$(node --version)" >>$GITHUB_OUTPUT
 
       - name: cache node dependencies
         uses: actions/cache@v3
         with:
           path: v9web/node_modules
-          key: ${{ runner.os }}-${{ steps.get-node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
+          key: ${{ runner.os }}-${{ steps.node-version.outputs.version }}-${{ hashFiles('v9web/yarn.lock') }}
 
       - name: install node dependencies
         shell: bash
