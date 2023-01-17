@@ -26,6 +26,10 @@ concurrency:
 
 jobs:
 
+
+
+
+
   tsc:
     continue-on-error: false
     runs-on: ubuntu-latest
@@ -42,7 +46,12 @@ jobs:
 
       - run: npm clean-install
 
+
       - run: npm run tsc
+
+
+
+
 
   rollup:
     continue-on-error: false
@@ -60,7 +69,12 @@ jobs:
 
       - run: npm clean-install
 
+
       - run: npm run build
+
+
+
+
 
   node_run:
     continue-on-error: false
@@ -78,6 +92,7 @@ jobs:
 
       - run: npm clean-install
 
+
       - name: java install
         uses: actions/setup-java@v3
         with:
@@ -92,6 +107,10 @@ jobs:
 
       - run: npm run run:emulator
         timeout-minutes: 1
+
+
+
+
 
   prettier:
     continue-on-error: false
@@ -109,7 +128,12 @@ jobs:
 
       - run: npm clean-install
 
+
       - run: npm run prettier:check
+
+
+
+
 
   validate_v9web_yml:
     continue-on-error: false
@@ -126,6 +150,7 @@ jobs:
           cache-dependency-path: v9web/package-lock.json
 
       - run: npm clean-install
+
 
       - name: npm run gha:generate
         id: gha_generate
