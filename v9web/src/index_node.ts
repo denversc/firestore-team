@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-import { initializeApp } from '@firebase/app';
+import { FirebaseOptions, initializeApp } from '@firebase/app';
 import {
   connectFirestoreEmulator,
   Firestore,
+  FirestoreSettings,
   getFirestore,
+  initializeFirestore,
   setLogLevel,
   terminate
 } from '@firebase/firestore';
 
-import { firebaseConfig, isDefaultFirebaseConfig } from './firebase_config.js';
+import { parseArgs, ParsedArgs } from './arg_parser_node.js';
+import {
+  hostNameFromHost,
+  isPlaceholderValue,
+  PlaceholderProjectIdNotAllowedError
+} from './firebase_config.js';
+
 import { runTheTest } from './run_the_test.js';
 import { CancellationTokenSource } from './cancellation_token.js';
 import { log, setLogFunction } from './logging.js';
@@ -33,91 +41,53 @@ import { formatElapsedTime } from './util.js';
 // Initialize the logging framework.
 setLogFunction(nodeLog);
 
-interface SetupFirestoreOptions {
-  useFirestoreEmulator: boolean;
-  debugLoggingEnabled: boolean;
-}
-
 /**
  * Create the `Firestore` object and return it.
- *
- * The first invocation of this method will create the `Firestore` object, and
- * subsequent invocations will return the same `Firestore` instance.
  */
-function setupFirestore(options: SetupFirestoreOptions): Firestore {
-  const { useFirestoreEmulator, debugLoggingEnabled } = options;
+function setupFirestore(options: ParsedArgs): Firestore {
+  const { apiKey, debugLoggingEnabled, host, projectId } = options;
+  const hostName = hostNameFromHost(host);
 
-  // Verify that the `FirestoreOptions` are set to something other than the
-  // defaults if the Firestore emulator is not being used. The default options
-  // work with the emulator, but will cause strange errors if used against prod.
-  if (isDefaultFirebaseConfig(firebaseConfig) && !useFirestoreEmulator) {
-    throw new Error(
-      'The values of firebaseConfig in firebase_config.ts need to be set' +
-        ' when not using the Firestore emulator.'
+  // Verify that the Project ID is set to something other than the default if
+  // the Firestore emulator is not being used. The default Project ID works with
+  // the emulator, but will cause strange errors if used against prod.
+  if (host !== 'emulator' && isPlaceholderValue(projectId)) {
+    throw new PlaceholderProjectIdNotAllowedError(
+      'The Project ID needs to be set in firebase_config.ts or specified on ' +
+        'the command-line unless using the Firestore emulator.'
     );
   }
 
-  log(`initializeApp(${firebaseConfig.projectId})`);
+  const firebaseConfig: FirebaseOptions = { projectId };
+  if (!isPlaceholderValue(apiKey)) {
+    firebaseConfig.apiKey = apiKey;
+  }
+
+  log(`initializeApp(${JSON.stringify(firebaseConfig)})`);
   const app = initializeApp(firebaseConfig);
 
-  if (debugLoggingEnabled) {
+  if (options.debugLoggingEnabled) {
     const logLevel = 'debug';
     log(`setLogLevel(${logLevel})`);
     setLogLevel(logLevel);
   }
 
-  log('getFirestore()');
-  const db = getFirestore(app);
+  let db: Firestore;
+  if (host === 'prod' || host === 'emulator') {
+    log('getFirestore()');
+    db = getFirestore(app);
+  } else {
+    const firestoreSettings: FirestoreSettings = { host: hostName };
+    log(`initializeFirestore(${JSON.stringify(firestoreSettings)})`);
+    db = initializeFirestore(app, firestoreSettings);
+  }
 
-  if (useFirestoreEmulator) {
-    log("connectFirestoreEmulator(db, 'localhost', 8080)");
-    connectFirestoreEmulator(db, 'localhost', 8080);
+  if (host === 'emulator') {
+    log(`connectFirestoreEmulator(db, ${hostName}, 8080)`);
+    connectFirestoreEmulator(db, hostName, 8080);
   }
 
   return db;
-}
-
-/**
- * Parses the command-line arguments.
- *
- * @return the parsed command-line arguments.
- */
-function parseArgs(): SetupFirestoreOptions | null {
-  const options: SetupFirestoreOptions = {
-    useFirestoreEmulator: false,
-    debugLoggingEnabled: false
-  };
-
-  for (const arg of process.argv.slice(2)) {
-    if (arg === '--emulator' || arg === '-e') {
-      options.useFirestoreEmulator = true;
-    } else if (arg === '--prod' || arg === '-p') {
-      options.useFirestoreEmulator = false;
-    } else if (arg === '--verbose' || arg === '-v') {
-      options.debugLoggingEnabled = true;
-    } else if (arg === '--quiet' || arg === '-q') {
-      options.debugLoggingEnabled = false;
-    } else if (arg === '--help' || arg === '-h') {
-      console.log(`Syntax: ${process.argv[0]} ${process.argv[1]} [options]`);
-      console.log('');
-      console.log('Options:');
-      console.log('  -e/--emulator');
-      console.log('    Connect to the Firestore emulator.');
-      console.log('  -p/--prod');
-      console.log('    Connect to the Firestore production server (default).');
-      console.log('  -v/--verbose');
-      console.log('    Enable Firestore debug logging.');
-      console.log('  -q/--quiet');
-      console.log('    Disable Firestore debug logging (default).');
-      console.log('  -h/--help');
-      console.log('    Print this help message and exit.');
-      return null;
-    } else {
-      throw new Error(`unrecognized command-line argument: ${arg}`);
-    }
-  }
-
-  return options;
 }
 
 /**
@@ -128,10 +98,7 @@ function parseArgs(): SetupFirestoreOptions | null {
  * `run_the_test.ts`.
  */
 async function go() {
-  const setupFirestoreOptions = parseArgs();
-  if (setupFirestoreOptions === null) {
-    return;
-  }
+  const parsedArgs = parseArgs();
 
   // Since there is no way to cancel when running in Node.js, just use a
   // CancellationToken that will never be cancelled.
@@ -140,7 +107,7 @@ async function go() {
   const startTime: DOMHighResTimeStamp = performance.now();
   log(`Test Started`);
   try {
-    const db = setupFirestore(setupFirestoreOptions);
+    const db = setupFirestore(parsedArgs);
     try {
       await runTheTest(db, cancellationToken);
     } finally {

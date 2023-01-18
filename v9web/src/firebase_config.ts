@@ -14,27 +14,70 @@
  * limitations under the License.
  */
 
-import { FirebaseOptions } from '@firebase/app';
-
-// Replace `firebaseConfig` below with your project's config, copied from the
-// Firebase Console. If using the Firestore emulator, you can just leave the
-// values below as-is.
-const firebaseConfig: FirebaseOptions = {
-  apiKey: 'abc-123-def',
-  projectId: 'my-test-project'
-};
+/**
+ * The Firebase Project ID to use.
+ * Example: "my-cool-project"
+ */
+export const PROJECT_ID = 'REPLACE_WITH_YOUR_PROJECT_ID';
 
 /**
- * Returns whether the values in the given `FirebaseOptions` are set to the
- * dummy/default values that are committed into the GitHub repository.
- *
- * This function is used to test whether the config was modified to contain
- * valid data.
+ * The Firestore API key to use.
+ * Example: "BTzaRyDNXIllFmlXIE4LmCzDQAYtITefbbixR4Z"
  */
-export function isDefaultFirebaseConfig(options: FirebaseOptions): boolean {
-  return (
-    options.apiKey === 'abc-123-def' && options.projectId === 'my-test-project'
-  );
+export const API_KEY = 'REPLACE_WITH_YOUR_API_KEY';
+
+/**
+ * The IDs of known Firestore hosts.
+ */
+export type FirestoreHost = 'prod' | 'emulator' | 'nightly' | 'qa';
+
+/**
+ * The Firestore host to connect to.
+ */
+export const HOST: FirestoreHost = 'prod';
+
+/** Returns the host name for the given Firestore host. */
+export function hostNameFromHost(host: FirestoreHost): string {
+  switch (host) {
+    case 'prod':
+      return 'firestore.googleapis.com';
+    case 'emulator':
+      return '127.0.0.1';
+    case 'nightly':
+      return 'test-firestore.sandbox.googleapis.com';
+    case 'qa':
+      return 'staging-firestore.sandbox.googleapis.com';
+  }
+  throw new UnknownFirestoreHostError(host);
 }
 
-export { firebaseConfig };
+/**
+ * Returns whether the given value is a "placeholder" value for `PROJECT_ID` or
+ * `API_KEY` that is committed into the GitHub repository.
+ *
+ * This function is used to test whether these constants were modified, as
+ * documented, to contain valid data.
+ */
+export function isPlaceholderValue(value: string): boolean {
+  return value.startsWith('REPLACE_WITH_YOUR_');
+}
+
+/**
+ * Exception thrown if a method is given a string that is not equal to one of
+ * strings in the `FirestoreHost` union type.
+ */
+export class UnknownFirestoreHostError extends Error {
+  name = 'UnknownFirestoreHostError';
+
+  constructor(host: string) {
+    super(`unknown host: ${host}`);
+  }
+}
+
+/**
+ * The exception thrown when the PROJECT_ID is not set to a valid value, but is
+ * instead left with the placeholder, and a valid value is required.
+ */
+export class PlaceholderProjectIdNotAllowedError extends Error {
+  name = 'PlaceholderProjectIdNotAllowedError';
+}

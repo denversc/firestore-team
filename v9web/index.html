@@ -25,7 +25,7 @@ limitations under the License.
 
   <body>
     <!-- The main content of this web page. -->
-    <div class="container-fluid mt-3">
+    <div id="divMain" class="container-fluid mt-3" hidden>
       <div class="row">
         <div class="col-sm-3 pe-3">
           <button id="btnRunTest" class="btn btn-primary mb-2">Run Test</button>
@@ -34,11 +34,9 @@ limitations under the License.
             Cancel Test
           </button>
           <br />
-          <input id="chkDebugLogging" type="checkbox" class="mb-2" />
-          <label for="chkDebugLogging">Enable Debug Logging</label>
-          <br />
-          <input id="chkFirestoreEmulator" type="checkbox" class="mb-2" />
-          <label for="chkFirestoreEmulator">Use Firestore Emulator</label>
+          <button id="btnSettings" class="btn btn-secondary mb-2">
+            Settings
+          </button>
         </div>
         <div class="col-lg-9">
           <button id="btnClearLogs" class="btn btn-secondary mb-2" hidden>
@@ -50,7 +48,102 @@ limitations under the License.
       </div>
     </div>
 
-    <!-- The content that is revealed if there is an error loading the JavaScript library. -->
+    <!-- The "div" that is revealed when the "Settings" button is clicked. -->
+    <div id="divSettings" hidden>
+      <h2>Settings</h2>
+
+      <p>
+        <button id="btnSettingsSave">Save</button>
+        <button id="btnSettingsCancel">Cancel</button>
+      </p>
+
+      <h3>General Settings</h3>
+      <p>
+        <input id="chkDebugLogging" type="checkbox" />
+        <label for="chkDebugLogging">Firestore Debug Logging</label>
+      </p>
+
+      <h3>Firestore Host</h3>
+      <table>
+        <tr
+          onclick="document.getElementById('radFirestoreHostProd').checked = true;"
+        >
+          <td>
+            <input
+              name="FirestoreHost"
+              id="radFirestoreHostProd"
+              type="radio"
+            />
+            <label for="radFirestoreHostProd">
+              <span data-dynamic-replace="HOST_LABEL_PROD">Production</span>
+            </label>
+          </td>
+          <td>
+            <span data-dynamic-replace="HOST_NAME_PROD"></span>
+          </td>
+        </tr>
+        <tr
+          onclick="document.getElementById('radFirestoreHostEmulator').checked = true;"
+        >
+          <td>
+            <input
+              name="FirestoreHost"
+              id="radFirestoreHostEmulator"
+              type="radio"
+            />
+            <label for="radFirestoreHostEmulator">
+              <span data-dynamic-replace="HOST_LABEL_EMULATOR">Emulator</span>
+            </label>
+          </td>
+          <td>
+            <span data-dynamic-replace="HOST_NAME_EMULATOR"></span>
+          </td>
+        </tr>
+        <tr
+          onclick="document.getElementById('radFirestoreHostNightly').checked = true;"
+        >
+          <td>
+            <input
+              name="FirestoreHost"
+              id="radFirestoreHostNightly"
+              type="radio"
+            />
+            <label for="radFirestoreHostNightly">
+              <span data-dynamic-replace="HOST_LABEL_NIGHTLY">Nightly</span>
+            </label>
+          </td>
+          <td>
+            <span data-dynamic-replace="HOST_NAME_NIGHTLY"></span>
+          </td>
+        </tr>
+        <tr
+          onclick="document.getElementById('radFirestoreHostQA').checked = true;"
+        >
+          <td>
+            <input name="FirestoreHost" id="radFirestoreHostQA" type="radio" />
+            <label for="radFirestoreHostQA">
+              <span data-dynamic-replace="HOST_LABEL_QA">QA</span>
+            </label>
+          </td>
+          <td>
+            <span data-dynamic-replace="HOST_NAME_QA"></span>
+          </td>
+        </tr>
+      </table>
+
+      <h3>Advanced Settings</h3>
+      <table>
+        <tr>
+          <td><label for="txtProjectId">Project ID:</label></td>
+          <td><input id="txtProjectId" type="text" /></td>
+        </tr>
+        <tr>
+          <td><label for="txtApiKey">API Key:</label></td>
+          <td><input id="txtApiKey" type="text" /></td>
+        </tr>
+      </table>
+    </div>
+
     <div class="alert alert-danger" role="alert" id="divScriptLoadError" hidden>
       <strong>
         ERROR: Loading the compiled JavaScript module
@@ -69,12 +162,8 @@ limitations under the License.
       <br />
       <code>npm run serve</code>
       <br />
-      or
-      <br />
-      <code>npm run serve</code>
-      <br />
       then browse to
-      <a href="http://localhost:9080">http://localhost:9080</a>.
+      <a href="http://localhost:9080">http://localhost:9080</a>
     </div>
 
     <!-- Show an error if loading the main JavaScript module failed. -->

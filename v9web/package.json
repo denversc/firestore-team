@@ -8,7 +8,7 @@
     "build": "rollup -c",
     "serve": "static-server",
     "run": "ts-node --esm src/index_node.ts",
-    "run:emulator": "firebase emulators:exec --only firestore --project \"$(grep projectId: src/firebase_config.ts | gawk -F\\' '{print $2}' -)\" 'npm run run -- -e'",
+    "run:emulator": "firebase emulators:exec --only firestore --project my-test-project 'npm run run -- -e -p my-test-project'",
     "tsc": "tsc",
     "gha:generate": "ts-node --esm gha/compile.ts"
   },
