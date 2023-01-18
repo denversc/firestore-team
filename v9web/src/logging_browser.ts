@@ -16,7 +16,8 @@
 
 /** Clears the messages logged via `log()` from the UI. */
 export function clearLogs(): void {
-  getLogHtmlElement().innerHTML = '';
+  getLogHtmlElement().textContent = '';
+  getClearLogsButton().hidden = true;
 }
 
 export interface LogOptions {
@@ -25,11 +26,15 @@ export interface LogOptions {
 
 /** Logs a message to the UI and console.log(). */
 export function log(message: string, options: unknown): void {
+  getClearLogsButton().hidden = false;
   const typedOptions = options as Partial<LogOptions>;
   const alsoLogToConsole = typedOptions?.alsoLogToConsole ?? true;
   const htmlElement = getLogHtmlElement();
-  htmlElement.appendChild(document.createTextNode(message));
-  htmlElement.appendChild(document.createElement('br'));
+  if (!htmlElement.textContent) {
+    htmlElement.textContent = message;
+  } else {
+    htmlElement.textContent += '\n' + message;
+  }
   if (alsoLogToConsole) {
     console.log(message);
   }
@@ -37,5 +42,10 @@ export function log(message: string, options: unknown): void {
 
 /** Gets the HTML element that contains the logged messages. */
 function getLogHtmlElement(): HTMLElement {
-  return document.getElementById('logPara')!;
+  return document.getElementById('logOutput')!;
+}
+
+/** Gets the HTML button element that clears the logs. */
+function getClearLogsButton(): HTMLElement {
+  return document.getElementById('btnClearLogs')!;
 }

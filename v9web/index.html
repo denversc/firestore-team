@@ -13,54 +13,68 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+<!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="resources/bootstrap-5.2.3/bootstrap.css" rel="stylesheet" />
     <link rel="icon" type="image/png" href="resources/firebase_28dp.png" />
     <script id="scriptMain" type="module" src="dist/bundle.browser.js"></script>
   </head>
+
   <body>
-    <p>
-      <button id="btnRunTest">Run Test</button>
-      <button id="btnCancelTest">Cancel Test</button>
-      <button id="btnClearLogs">Clear Logs</button>
-    </p>
+    <!-- The main content of this web page. -->
+    <div class="container-fluid mt-3">
+      <div class="row">
+        <div class="col-sm-3 pe-3">
+          <button id="btnRunTest" class="btn btn-primary mb-2">Run Test</button>
+          <br />
+          <button id="btnCancelTest" class="btn btn-secondary mb-2">
+            Cancel Test
+          </button>
+          <br />
+          <input id="chkDebugLogging" type="checkbox" class="mb-2" />
+          <label for="chkDebugLogging">Enable Debug Logging</label>
+          <br />
+          <input id="chkFirestoreEmulator" type="checkbox" class="mb-2" />
+          <label for="chkFirestoreEmulator">Use Firestore Emulator</label>
+        </div>
+        <div class="col-lg-9">
+          <button id="btnClearLogs" class="btn btn-secondary mb-2" hidden>
+            Clear Logs
+          </button>
+          <br />
+          <pre id="logOutput"></pre>
+        </div>
+      </div>
+    </div>
 
-    <p>
-      <input id="chkDebugLogging" type="checkbox" />
-      <label for="chkDebugLogging">Enable Debug Logging</label>
-      <input id="chkFirestoreEmulator" type="checkbox" />
-      <label for="chkFirestoreEmulator">Use Firestore Emulator</label>
-    </p>
-
-    <p id="logPara" style="font-family: 'Lucida Console', monospace"></p>
-
-    <!-- The "div" that is revealed if there is an error loading the JavaScript library. -->
-    <div id="divScriptLoadError" hidden>
-      <p style="color: darkred">
-        <strong>
-          Loading the compiled JavaScript module
-          <span id="spanJavascriptModuleSrc"></span>
-          failed.
-        </strong>
-        <br />
-        Check the JavaScript console logs for details.
-        <br />
-        If you opened index.html directly then this won't work because loading
-        JavaScript modules via file:/// URLs causes a CORS error.
-        <br />
-        To fix this, serve the web site with an HTTP server.
-        <br />
-        To quickly start an HTTP server run
-        <br />
-        <code>npm run serve</code>
-        <br />
-        or
-        <br />
-        <code>npm run serve</code>
-        <br />
-        then browse to
-        <a href="http://localhost:9080">http://localhost:9080</a>.
-      </p>
+    <!-- The content that is revealed if there is an error loading the JavaScript library. -->
+    <div class="alert alert-danger" role="alert" id="divScriptLoadError" hidden>
+      <strong>
+        ERROR: Loading the compiled JavaScript module
+        <span id="spanJavascriptModuleSrc"></span>
+        failed.
+      </strong>
+      <br />
+      Check the JavaScript console logs for details.
+      <br />
+      If you opened index.html directly then this won't work because loading
+      JavaScript modules via file:/// URLs causes a CORS error.
+      <br />
+      To fix this, serve the web site with an HTTP server.
+      <br />
+      To quickly start an HTTP server run
+      <br />
+      <code>npm run serve</code>
+      <br />
+      or
+      <br />
+      <code>npm run serve</code>
+      <br />
+      then browse to
+      <a href="http://localhost:9080">http://localhost:9080</a>.
     </div>
 
     <!-- Show an error if loading the main JavaScript module failed. -->
@@ -74,5 +88,6 @@ limitations under the License.
         };
       })();
     </script>
+    <script src="resources/bootstrap-5.2.3/bootstrap.bundle.js"></script>
   </body>
 </html>

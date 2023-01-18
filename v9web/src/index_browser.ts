@@ -265,8 +265,6 @@ function initializeUi(): void {
   btnClearLogs.onclick = clearLogsAndResetStartTime;
   chkDebugLogging.onclick = onChkDebugLoggingClick;
   initializeCheckboxStates();
-
-  log(`Click "${btnRunTest.innerText}" to run the test`);
 }
 
 // Call initializeUi() to get everything wired up.
