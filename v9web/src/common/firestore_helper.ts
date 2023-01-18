@@ -23,6 +23,9 @@ import {
 } from '@firebase/firestore';
 
 import {
+  displayValueFromHost,
+  FirestoreHost,
+  hostNameFromHost,
   isPlaceholderValue,
   PlaceholderProjectIdNotAllowedError
 } from './util.js';
@@ -59,69 +62,141 @@ export function setBase64Encode(base64EncodeToSet: Base64Encode): void {
   base64Encode = base64EncodeToSet;
 }
 
-class FirebaseObjectCache<T> {
-  private readonly cachedObjectsByKey = new Map<string, T>();
+class FirebaseObjectCacheKey {
+  constructor(
+    readonly host: FirestoreHost,
+    readonly projectId: string,
+    readonly apiKey: string,
+    readonly instanceId: number | null
+  ) {}
 
-  get(host: string, projectId: string, apiKey: string): T | null {
-    const key = FirebaseObjectCache.key(host, projectId, apiKey);
-    return this.cachedObjectsByKey.get(key) ?? null;
+  get hostName(): string {
+    return hostNameFromHost(this.host);
   }
 
-  set(host: string, projectId: string, apiKey: string, object: T): void {
-    const key = FirebaseObjectCache.key(host, projectId, apiKey);
-    if (this.cachedObjectsByKey.has(key)) {
-      throw new Error(
-        `Entry for host=${host} projectId=${projectId} apiKey=${apiKey} already exists`
-      );
-    }
-    this.cachedObjectsByKey.set(key, object);
-  }
-
-  private static key(host: string, projectId: string, apiKey: string): string {
-    return `${host}%${projectId}%${apiKey}`;
-  }
-}
-
-function stableFirebaseAppNameFrom(
-  host: string,
-  projectId: string,
-  apiKey: string
-): string {
-  const encoder = new TextEncoder();
-  const encodedValue = encoder.encode(`${host}%${projectId}%${apiKey}`);
-
-  if (!hasher) {
-    throw new Error('hasher is needed but hash not yet been initialized');
-  }
-  if (!base64Encode) {
-    throw new Error(
-      'base64 encode function is needed but hash not yet been initialized'
+  get displayString(): string {
+    return (
+      `host=${this.hostName} (${this.host}), ` +
+      `projectId=${this.projectId}, apiKey=${this.apiKey}, ` +
+      `appName=${this.appName}`
     );
   }
 
-  hasher.reset();
-  hasher.update(encodedValue);
-  const digest = hasher.digest();
-  const digestByteString = digest.map(n => String.fromCharCode(n)).join('');
-  const base64Digest = base64Encode(digestByteString);
+  get appName(): string {
+    const encoder = new TextEncoder();
+    const encodedValue = encoder.encode(this.canonicalStringWithoutInstanceId);
 
-  return Array.from(base64Digest)
-    .filter(c => c !== '=')
-    .join('');
+    if (!hasher) {
+      throw new Error('hasher is needed but hash not yet been initialized');
+    }
+    if (!base64Encode) {
+      throw new Error(
+        'base64 encode function is needed but hash not yet been initialized'
+      );
+    }
+
+    hasher.reset();
+    hasher.update(encodedValue);
+    const digest = hasher.digest();
+    const digestByteString = digest.map(n => String.fromCharCode(n)).join('');
+    const base64Digest = base64Encode(digestByteString);
+
+    const base64DigestString = Array.from(base64Digest)
+      .filter(c => c !== '=')
+      .join('');
+
+    return (
+      base64DigestString +
+      (this.instanceId === null ? '' : `-${this.instanceId}`)
+    );
+  }
+
+  get canonicalString(): string {
+    return (
+      this.canonicalStringWithoutInstanceId +
+      (this.instanceId === null ? '' : `%${this.instanceId}`)
+    );
+  }
+
+  get canonicalStringWithoutInstanceId(): string {
+    return `${this.host}%${this.projectId}%${this.apiKey}`;
+  }
 }
 
-const firebaseAppCache = new FirebaseObjectCache<FirebaseApp>();
-const firestoreInstanceCache = new FirebaseObjectCache<Firestore>();
+class FirebaseAppCacheEntry extends FirebaseObjectCacheKey {
+  constructor(readonly app: FirebaseApp, key: FirebaseObjectCacheKey) {
+    super(key.host, key.projectId, key.apiKey, key.instanceId);
+  }
+}
+
+class FirestoreCacheEntry extends FirebaseObjectCacheKey {
+  constructor(
+    readonly db: Firestore,
+    key: FirebaseObjectCacheKey,
+    readonly ssl: boolean
+  ) {
+    super(key.host, key.projectId, key.apiKey, key.instanceId);
+  }
+
+  toFirestoreInfo(): FirestoreInfo {
+    return {
+      db: this.db,
+      appName: this.appName,
+      projectId: this.projectId,
+      apiKey: this.apiKey,
+      host: this.host,
+      hostName: this.hostName,
+      ssl: this.ssl
+    };
+  }
+}
+
+class FirebaseObjectCache<T> {
+  private readonly cachedObjectsByKey = new Map<string, T>();
+
+  get(key: FirebaseObjectCacheKey): T | null {
+    return this.cachedObjectsByKey.get(key.canonicalString) ?? null;
+  }
+
+  set(key: FirebaseObjectCacheKey, value: T): void {
+    const keyString = key.canonicalString;
+    if (this.cachedObjectsByKey.has(keyString)) {
+      throw new Error(`Entry for ${keyString} already exists`);
+    }
+    this.cachedObjectsByKey.set(keyString, value);
+  }
+}
+
+const firebaseAppCache = new FirebaseObjectCache<FirebaseAppCacheEntry>();
+const firestoreInstanceCache = new FirebaseObjectCache<FirestoreCacheEntry>();
+
+export interface FirestoreInfo {
+  readonly db: Firestore;
+  readonly appName: string;
+  readonly projectId: string;
+  readonly apiKey: string;
+  readonly host: FirestoreHost;
+  readonly hostName: string;
+  readonly ssl: boolean;
+}
 
 /**
  * Create the `Firestore` object and return it.
  */
-function getOrCreateFirestore(settings: Settings): Firestore {
+function getOrCreateFirestore(
+  settings: Settings,
+  instanceId?: number
+): FirestoreInfo {
   const host = settings.host.value;
   const hostName = settings.host.hostName;
-  const hostDisplayName = settings.host.displayValue;
   const projectId = settings.projectId.value;
   const apiKey = settings.apiKey.value;
+  const cacheKey = new FirebaseObjectCacheKey(
+    host,
+    projectId,
+    apiKey,
+    instanceId ?? null
+  );
 
   // Verify that the Project ID is set to something other than the default if
   // the Firestore emulator is not being used. The default Project ID works with
@@ -139,49 +214,48 @@ function getOrCreateFirestore(settings: Settings): Firestore {
   }
 
   // Use a previously-cached Firestore instance, if available.
-  const cachedDb = firestoreInstanceCache.get(host, projectId, apiKey);
+  const cachedDb = firestoreInstanceCache.get(cacheKey);
   if (cachedDb !== null) {
-    log(
-      `Using existing Firestore instance with host ${hostDisplayName} ` +
-        `and Project ID ${projectId}`
-    );
-    return cachedDb;
+    log(`Using existing Firestore instance with ${cachedDb.displayString}`);
+    return cachedDb.toFirestoreInfo();
   }
 
-  const cachedApp = firebaseAppCache.get(host, projectId, apiKey);
+  const cachedApp = firebaseAppCache.get(cacheKey);
+  const appName = cacheKey.appName;
   let app: FirebaseApp;
   if (cachedApp !== null) {
-    log(`Using existing FirebaseApp instance with Project ID ${projectId}`);
-    app = cachedApp;
+    log(`Using existing FirebaseApp instance for ${cachedApp.displayString}`);
+    app = cachedApp.app;
   } else {
-    const appName = stableFirebaseAppNameFrom(host, projectId, apiKey);
     log(
-      `initializeApp(projectId=${projectId}, apiKey=${apiKey}, ` +
-        `appName=${appName})"`
+      `initializeApp() with projectId=${projectId}, apiKey=${apiKey}, ` +
+        `appName=${appName}`
     );
     app = initializeApp({ projectId, apiKey }, appName);
-    firebaseAppCache.set(host, projectId, apiKey, app);
+    firebaseAppCache.set(cacheKey, new FirebaseAppCacheEntry(app, cacheKey));
   }
 
   let db: Firestore;
-  if (host === 'prod') {
-    log(`getFirestore() for host ${hostDisplayName} (${host})`);
-    db = getFirestore(app);
-  } else if (host === 'emulator') {
-    log('getFirestore()');
+  if (host === 'prod' || host === 'emulator') {
+    log(`getFirestore() for ${cacheKey.displayString}`);
     db = getFirestore(app);
   } else {
-    log(`initializeFirestore(app, { host: ${hostName} (${host}) }`);
+    log(`initializeFirestore() with host=${hostName} (${host})`);
     db = initializeFirestore(app, { host: hostName });
   }
 
-  if (host === 'emulator') {
+  let ssl: boolean;
+  if (host !== 'emulator') {
+    ssl = true;
+  } else {
+    ssl = false;
     log(`connectFirestoreEmulator(db, ${hostName}, 8080)`);
     connectFirestoreEmulator(db, hostName, 8080);
   }
 
-  firestoreInstanceCache.set(host, projectId, apiKey, db);
-  return db;
+  const firestoreCacheEntry = new FirestoreCacheEntry(db, cacheKey, ssl);
+  firestoreInstanceCache.set(cacheKey, firestoreCacheEntry);
+  return firestoreCacheEntry.toFirestoreInfo();
 }
 
 export { getOrCreateFirestore as getFirestore };

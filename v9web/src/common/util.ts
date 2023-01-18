@@ -172,6 +172,26 @@ export function hostNameFromHost(host: FirestoreHost): string {
   throw new UnknownFirestoreHostError(host);
 }
 
+export function displayValueFromHost(hostId: FirestoreHost): string {
+  const label = displayLabelFromHost(hostId);
+  const hostName = hostNameFromHost(hostId);
+  return `${label} (${hostName})`;
+}
+
+export function displayLabelFromHost(hostId: FirestoreHost): string {
+  switch (hostId) {
+    case 'prod':
+      return 'Production';
+    case 'emulator':
+      return 'Emulator';
+    case 'nightly':
+      return 'Nightly';
+    case 'qa':
+      return 'QA';
+  }
+  throw new UnknownFirestoreHostError(hostId);
+}
+
 /**
  * Returns whether the given value is a "placeholder" value for `PROJECT_ID` or
  * `API_KEY` that is committed into the GitHub repository.

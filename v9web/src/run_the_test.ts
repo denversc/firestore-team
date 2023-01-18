@@ -16,7 +16,11 @@
 
 import {
   collection,
+  deleteDoc,
+  disableNetwork,
+  enableNetwork,
   doc,
+  enableIndexedDbPersistence,
   getDoc,
   getDocs,
   onSnapshot,
@@ -35,7 +39,7 @@ import {
 } from '@firebase/firestore';
 
 import { log } from './common/logging.js';
-import { CancellationToken } from './common/cancellation_token.js';
+import { TestEnvironment } from './common/test_environment';
 import {
   createDocument,
   createDocuments,
@@ -50,12 +54,12 @@ import {
  * when the user clicks the "Run Test" button in the UI.
  *
  * @param db the `Firestore` instance to use.
- * @param cancellationToken a token that can be used to terminate early in the
- * case of a cancellation request.
+ * @param env extra information about the given Firestore instance and some
+ * helper methods.
  */
 export async function runTheTest(
   db: Firestore,
-  cancellationToken: CancellationToken
+  env: TestEnvironment
 ): Promise<void> {
   const collectionRef = createEmptyCollection(db, 'v9web-demo-');
   const createdDocumentData = { foo: generateValue() };
@@ -64,22 +68,22 @@ export async function runTheTest(
     'doc1',
     createdDocumentData
   );
-  cancellationToken.throwIfCancelled();
+  env.cancellationToken?.throwIfCancelled();
 
   log(`getDoc(${documentRef.id})`);
   const snapshot1 = await getDoc(documentRef);
   log(
     `getDoc(${documentRef.id}) returned: ${JSON.stringify(snapshot1.data())}`
   );
-  cancellationToken.throwIfCancelled();
+  env?.cancellationToken?.throwIfCancelled();
 
   const dataToSet = { foo: createdDocumentData.foo + '-NEW' };
   log(`setDoc(${documentRef.id}, ${JSON.stringify(dataToSet)})`);
   await setDoc<DocumentData>(documentRef, dataToSet);
-  cancellationToken.throwIfCancelled();
+  env?.cancellationToken?.throwIfCancelled();
 
   log(`getDoc(${documentRef.id})`);
   const snapshot = await getDoc(documentRef);
   log(`getDoc(${documentRef.id}) returned: ${JSON.stringify(snapshot.data())}`);
-  cancellationToken.throwIfCancelled();
+  env?.cancellationToken?.throwIfCancelled();
 }

@@ -27,10 +27,11 @@ import {
 import { parseArgs, updateSettingsFromParsedArgs } from './arg_parser.js';
 import { SettingsStorage, Settings } from '../common/settings.js';
 import { runTheTest } from '../run_the_test.js';
-import { CancellationTokenSource } from '../common/cancellation_token.js';
 import { initialize as initializeLogging } from './logging.js';
 import { log } from '../common/logging.js';
 import { formatElapsedTime } from '../common/util.js';
+import { TestEnvironment } from '../common/test_environment';
+import { Firestore } from '@firebase/firestore/dist';
 
 class MemorySettingsStorage implements SettingsStorage {
   readonly map = new Map<string, string>();
@@ -99,19 +100,22 @@ async function go() {
   const settings = Settings.load(new MemorySettingsStorage());
   updateSettingsFromParsedArgs(parsedArgs, settings);
 
-  // Since there is no way to cancel when running in Node.js, just use a
-  // CancellationToken that will never be cancelled.
-  const cancellationToken = new CancellationTokenSource().cancellationToken;
-
   const startTime: DOMHighResTimeStamp = performance.now();
   log(`Test Started`);
   try {
-    const db = getFirestore(settings);
+    const dbInfo = getFirestore(settings);
+    const env: TestEnvironment = {
+      ...dbInfo,
+      getFirestore(instanceId: number): Firestore {
+        return getFirestore(settings, instanceId).db;
+      }
+    };
+
     try {
-      await runTheTest(db, cancellationToken);
+      await runTheTest(env.db, env);
     } finally {
       log('Terminating Firestore');
-      await terminate(db);
+      await terminate(env.db);
     }
   } catch (e) {
     if (e instanceof Error) {

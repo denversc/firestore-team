@@ -18,9 +18,9 @@ import { setLogLevel } from '@firebase/firestore';
 
 import { API_KEY, HOST, PROJECT_ID } from '../firebase_config.js';
 import {
+  displayValueFromHost,
   FirestoreHost,
-  hostNameFromHost,
-  UnknownFirestoreHostError
+  hostNameFromHost
 } from './util.js';
 import { log } from './logging.js';
 
@@ -229,35 +229,11 @@ export class SettingValue<T extends string | boolean>
  */
 export class FirestoreHostSettingValue extends SettingValue<FirestoreHost> {
   get displayValue(): string {
-    return FirestoreHostSettingValue.displayValueFromHostId(this.value);
+    return displayValueFromHost(this.value);
   }
 
   get hostName(): string {
-    return FirestoreHostSettingValue.hostNameFromHostId(this.value);
-  }
-
-  static hostNameFromHostId(hostId: FirestoreHost): string {
-    return hostNameFromHost(hostId);
-  }
-
-  static displayValueFromHostId(hostId: FirestoreHost): string {
-    const label = this.displayLabelFromHostId(hostId);
-    const hostName = this.hostNameFromHostId(hostId);
-    return `${label} (${hostName})`;
-  }
-
-  static displayLabelFromHostId(hostId: FirestoreHost): string {
-    switch (hostId) {
-      case 'prod':
-        return 'Production';
-      case 'emulator':
-        return 'Emulator';
-      case 'nightly':
-        return 'Nightly';
-      case 'qa':
-        return 'QA';
-    }
-    throw new UnknownFirestoreHostError(hostId);
+    return hostNameFromHost(this.value);
   }
 }
 

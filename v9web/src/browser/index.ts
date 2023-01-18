@@ -17,7 +17,9 @@
 import {
   formatElapsedTime,
   FirestoreHost,
-  isPlaceholderValue
+  isPlaceholderValue,
+  displayLabelFromHost,
+  hostNameFromHost
 } from '../common/util.js';
 import {
   getFirestore,
@@ -30,13 +32,9 @@ import {
   CancellationTokenSource
 } from '../common/cancellation_token.js';
 import { log, resetStartTime } from '../common/logging.js';
+import { TestEnvironment } from '../common/test_environment';
 import { initialize as initializeLogging } from './logging.js';
-import {
-  FirestoreHostSettingValue,
-  SettingValue,
-  SettingsStorage,
-  Settings
-} from '../common/settings.js';
+import { SettingValue, SettingsStorage, Settings } from '../common/settings.js';
 import {
   initializeDynamicReplaceSpanTexts,
   load as loadUi,
@@ -48,6 +46,7 @@ import {
 } from './ui';
 
 import { Md5 } from 'ts-closure-library/lib/crypt/md5';
+import { Firestore } from '@firebase/firestore';
 
 class SessionStorageSettingsStorage implements SettingsStorage {
   clear(key: string): void {
@@ -86,8 +85,18 @@ async function go(
   try {
     ui.setRunTestButtonEnabled(false);
     ui.setCancelTestButtonEnabled(true);
-    const db = getFirestore(loadSettings());
-    await runTheTest(db, cancellationToken);
+
+    const settings = loadSettings();
+    const dbInfo = getFirestore(settings);
+    const env: TestEnvironment = {
+      ...dbInfo,
+      cancellationToken,
+      getFirestore(instanceId: number): Firestore {
+        return getFirestore(settings, instanceId).db;
+      }
+    };
+
+    await runTheTest(env.db, env);
   } catch (e) {
     if (e instanceof Error) {
       log(`ERROR: ${e.message}`, { alsoLogToConsole: false });
@@ -228,18 +237,15 @@ class SettingsUiValuesImpl implements SettingsUiValues {
  * to replace the contents of the span with.
  */
 function loadSpanTextByDynamicReplaceKeyMap(): Map<string, string> {
-  const hostNameFromHostId = FirestoreHostSettingValue.hostNameFromHostId;
-  const displayLabelFromHostId =
-    FirestoreHostSettingValue.displayLabelFromHostId;
   const map = new Map<string, string>();
-  map.set('HOST_NAME_PROD', hostNameFromHostId('prod'));
-  map.set('HOST_NAME_EMULATOR', hostNameFromHostId('emulator'));
-  map.set('HOST_NAME_NIGHTLY', hostNameFromHostId('nightly'));
-  map.set('HOST_NAME_QA', hostNameFromHostId('qa'));
-  map.set('HOST_LABEL_PROD', displayLabelFromHostId('prod'));
-  map.set('HOST_LABEL_EMULATOR', displayLabelFromHostId('emulator'));
-  map.set('HOST_LABEL_NIGHTLY', displayLabelFromHostId('nightly'));
-  map.set('HOST_LABEL_QA', displayLabelFromHostId('qa'));
+  map.set('HOST_NAME_PROD', hostNameFromHost('prod'));
+  map.set('HOST_NAME_EMULATOR', hostNameFromHost('emulator'));
+  map.set('HOST_NAME_NIGHTLY', hostNameFromHost('nightly'));
+  map.set('HOST_NAME_QA', hostNameFromHost('qa'));
+  map.set('HOST_LABEL_PROD', displayLabelFromHost('prod'));
+  map.set('HOST_LABEL_EMULATOR', displayLabelFromHost('emulator'));
+  map.set('HOST_LABEL_NIGHTLY', displayLabelFromHost('nightly'));
+  map.set('HOST_LABEL_QA', displayLabelFromHost('qa'));
   return map;
 }
 
