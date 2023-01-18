@@ -30,17 +30,18 @@ import {
   DocumentSnapshot,
   Firestore,
   Query,
-  QuerySnapshot
+  QuerySnapshot,
+  DocumentData
 } from '@firebase/firestore';
 
-import { log } from './logging.js';
-import { CancellationToken } from './cancellation_token.js';
+import { log } from './common/logging.js';
+import { CancellationToken } from './common/cancellation_token.js';
 import {
   createDocument,
   createDocuments,
   createEmptyCollection,
   generateValue
-} from './util.js';
+} from './common/util.js';
 
 /**
  * Runs the test.
@@ -74,7 +75,7 @@ export async function runTheTest(
 
   const dataToSet = { foo: createdDocumentData.foo + '-NEW' };
   log(`setDoc(${documentRef.id}, ${JSON.stringify(dataToSet)})`);
-  await setDoc(documentRef, dataToSet);
+  await setDoc<DocumentData>(documentRef, dataToSet);
   cancellationToken.throwIfCancelled();
 
   log(`getDoc(${documentRef.id})`);

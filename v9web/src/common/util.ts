@@ -131,7 +131,7 @@ export async function createDocuments<T extends DocumentSpecs>(
 ): Promise<CreatedDocuments<T>> {
   const writeBatch_ = writeBatch(collectionRef.firestore as any);
   const createdDocuments = Object.fromEntries(
-    Object.entries(documentSpecs).map(([documentId]) => [
+    Object.entries(documentSpecs).map(([documentId, _]) => [
       documentId,
       doc(collectionRef, documentId)
     ])
@@ -150,4 +150,55 @@ export async function createDocuments<T extends DocumentSpecs>(
   await writeBatch_.commit();
 
   return createdDocuments;
+}
+
+/**
+ * The IDs of known Firestore hosts.
+ */
+export type FirestoreHost = 'prod' | 'emulator' | 'nightly' | 'qa';
+
+/** Returns the host name for the given Firestore host. */
+export function hostNameFromHost(host: FirestoreHost): string {
+  switch (host) {
+    case 'prod':
+      return 'firestore.googleapis.com';
+    case 'emulator':
+      return '127.0.0.1';
+    case 'nightly':
+      return 'test-firestore.sandbox.googleapis.com';
+    case 'qa':
+      return 'staging-firestore.sandbox.googleapis.com';
+  }
+  throw new UnknownFirestoreHostError(host);
+}
+
+/**
+ * Returns whether the given value is a "placeholder" value for `PROJECT_ID` or
+ * `API_KEY` that is committed into the GitHub repository.
+ *
+ * This function is used to test whether these constants were modified, as
+ * documented, to contain valid data.
+ */
+export function isPlaceholderValue(value: string): boolean {
+  return value.startsWith('REPLACE_WITH_YOUR_');
+}
+
+/**
+ * Exception thrown if a method is given a string that is not equal to one of
+ * strings in the `FirestoreHost` union type.
+ */
+export class UnknownFirestoreHostError extends Error {
+  name = 'UnknownFirestoreHostError';
+
+  constructor(host: string) {
+    super(`unknown host: ${host}`);
+  }
+}
+
+/**
+ * The exception thrown when the PROJECT_ID is not set to a valid value, but is
+ * instead left with the placeholder, and a valid value is required.
+ */
+export class PlaceholderProjectIdNotAllowedError extends Error {
+  name = 'PlaceholderProjectIdNotAllowedError';
 }

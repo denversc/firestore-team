@@ -7,7 +7,7 @@
     "prettier:check": "prettier --check .",
     "build": "rollup -c",
     "serve": "static-server",
-    "run": "ts-node --esm src/index_node.ts",
+    "run": "ts-node --esm src/node/index.ts",
     "run:emulator": "firebase emulators:exec --only firestore --project my-test-project 'npm run run -- -e -p my-test-project'",
     "tsc": "tsc",
     "gha:generate": "ts-node --esm gha/compile.ts"

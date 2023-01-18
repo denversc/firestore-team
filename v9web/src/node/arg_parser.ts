@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-import { API_KEY, FirestoreHost, HOST, PROJECT_ID } from './firebase_config.js';
+import { API_KEY, HOST, PROJECT_ID } from '../firebase_config.js';
+import { FirestoreHost } from '../common/util.js';
 
 // @ts-ignore
 import yargs from 'yargs/yargs';
-
-export interface ParsedArgs {
-  debugLoggingEnabled: boolean;
-  host: FirestoreHost;
-  projectId: string;
-  apiKey: string;
-}
+import { Settings } from '../common/settings.js';
 
 /**
  * Parses the command-line arguments.
@@ -32,7 +27,7 @@ export interface ParsedArgs {
  * @return the parsed command-line arguments.
  */
 export function parseArgs(): ParsedArgs {
-  const parsedArgs: ParsedYargs = yargs(process.argv.slice(2))
+  return yargs(process.argv.slice(2))
     .strict()
     .options({
       projectId: {
@@ -76,19 +71,44 @@ export function parseArgs(): ParsedArgs {
     .check(checkMutuallyExclusive('debug', 'quiet'))
     .help()
     .parseSync();
+}
 
-  return {
-    debugLoggingEnabled: parsedArgs.debug ?? false,
-    host: hostFromParsedArgs(parsedArgs),
-    projectId: parsedArgs.projectId ?? PROJECT_ID,
-    apiKey: parsedArgs.apiKey ?? API_KEY
-  };
+export function updateSettingsFromParsedArgs(
+  parsedArgs: ParsedArgs,
+  settings: Settings
+): void {
+  if (parsedArgs.debug !== undefined) {
+    settings.debugLogEnabled.setValue(true);
+  }
+  if (parsedArgs.quiet !== undefined) {
+    settings.debugLogEnabled.setValue(false);
+  }
+
+  if (parsedArgs.prod !== undefined) {
+    settings.host.setValue('prod');
+  }
+  if (parsedArgs.emulator !== undefined) {
+    settings.host.setValue('emulator');
+  }
+  if (parsedArgs.nightly !== undefined) {
+    settings.host.setValue('nightly');
+  }
+  if (parsedArgs.qa !== undefined) {
+    settings.host.setValue('qa');
+  }
+
+  if (parsedArgs.projectId) {
+    settings.projectId.setValue(parsedArgs.projectId);
+  }
+  if (parsedArgs.apiKey) {
+    settings.apiKey.setValue(parsedArgs.apiKey);
+  }
 }
 
 /**
  * The type of object returned from yargs.parseSync().
  */
-interface ParsedYargs {
+export interface ParsedArgs {
   projectId?: string;
   apiKey?: string;
   prod?: boolean;
@@ -107,9 +127,9 @@ interface ParsedYargs {
  * mutual exclusivity of the given arguments.
  */
 function checkMutuallyExclusive(
-  ...argNames: Array<keyof ParsedYargs>
-): (argv: ParsedYargs) => true {
-  return (argv: ParsedYargs): true => {
+  ...argNames: Array<keyof ParsedArgs>
+): (argv: ParsedArgs) => true {
+  return (argv: ParsedArgs): true => {
     const setArgNames = argNames.filter(argName => argv[argName] !== undefined);
     if (setArgNames.length > 1) {
       throw new Error(
@@ -119,23 +139,4 @@ function checkMutuallyExclusive(
     }
     return true;
   };
-}
-
-/**
- * Parses and returns the "host" from the given parsed arguments.
- */
-function hostFromParsedArgs(parsedArgs: ParsedYargs): FirestoreHost {
-  if (parsedArgs.prod) {
-    return 'prod';
-  }
-  if (parsedArgs.emulator) {
-    return 'emulator';
-  }
-  if (parsedArgs.nightly) {
-    return 'nightly';
-  }
-  if (parsedArgs.qa) {
-    return 'qa';
-  }
-  return HOST;
 }

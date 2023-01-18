@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-/** Logs a message using console.log(). */
-export function log(message: string, options: unknown): void {
+import { setLogFunction } from '../common/logging.js';
+
+// The function to use to perform logging in node.
+function nodeLog(message: string, options: unknown): void {
   console.log(message);
+}
+
+// Initialize the logging framework with node logging.
+export function initialize(): void {
+  setLogFunction(nodeLog);
 }
