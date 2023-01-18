@@ -75,15 +75,15 @@ export async function runTheTest(
   log(
     `getDoc(${documentRef.id}) returned: ${JSON.stringify(snapshot1.data())}`
   );
-  env?.cancellationToken?.throwIfCancelled();
+  env.cancellationToken?.throwIfCancelled();
 
   const dataToSet = { foo: createdDocumentData.foo + '-NEW' };
   log(`setDoc(${documentRef.id}, ${JSON.stringify(dataToSet)})`);
   await setDoc<DocumentData>(documentRef, dataToSet);
-  env?.cancellationToken?.throwIfCancelled();
+  env.cancellationToken?.throwIfCancelled();
 
   log(`getDoc(${documentRef.id})`);
   const snapshot = await getDoc(documentRef);
   log(`getDoc(${documentRef.id}) returned: ${JSON.stringify(snapshot.data())}`);
-  env?.cancellationToken?.throwIfCancelled();
+  env.cancellationToken?.throwIfCancelled();
 }
