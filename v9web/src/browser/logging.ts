@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { setLogFunction } from '../common/logging.js';
-import { MainUi } from './ui';
+import { LogMessage, setLogFunction } from '../common/logging.js';
+import { LoggingUi } from './ui';
 
 /** Initialize the logging framework with browser logging. */
-export function initialize(ui: MainUi): void {
-  setLogFunction((message: string, options: unknown) => {
-    browserLog(ui, message, options as Partial<LogOptions>);
+export function initialize(ui: LoggingUi): void {
+  setLogFunction((message: LogMessage) => {
+    browserLog(ui, message);
   });
 }
 
@@ -29,14 +29,12 @@ export interface LogOptions {
 }
 
 /** Logs a message to the UI and, by default, console.log(). */
-function browserLog(
-  ui: MainUi,
-  message: string,
-  options: Partial<LogOptions>
-): void {
+function browserLog(ui: LoggingUi, message: LogMessage): void {
   ui.setClearLogsButtonVisible(true);
-  ui.appendToLogOutput(message);
+  ui.appendToLogOutput(message.text, message.timestamp);
+
+  const options = message.options as Partial<LogOptions>;
   if (options?.alsoLogToConsole ?? true) {
-    console.log(message);
+    console.log(`${message.timestamp} ${message.text}`);
   }
 }

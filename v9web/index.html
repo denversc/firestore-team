@@ -42,106 +42,148 @@ limitations under the License.
           <button id="btnClearLogs" class="btn btn-secondary mb-2" hidden>
             Clear Logs
           </button>
-          <br />
-          <pre id="logOutput"></pre>
+
+          <!--
+            The single row of this table is used as a template to create
+            table rows to append to the log lines table.
+          -->
+          <table hidden>
+            <tr id="logLineTemplate" class="mb-2">
+              <td class="lh-1 align-text-top">
+                <span
+                  id="logLineTimestamp"
+                  class="font-monospace me-2"
+                  style="font-size: 12px"
+                ></span>
+              </td>
+              <td class="lh-1 align-text-top">
+                <span
+                  id="logLineMessage"
+                  class="font-monospace"
+                  style="font-size: 12px"
+                ></span>
+              </td>
+            </tr>
+          </table>
+
+          <!-- The table to which log lines will be appended. -->
+          <table class="table-borderless">
+            <tbody id="logLines"></tbody>
+          </table>
         </div>
       </div>
     </div>
 
     <!-- The "div" that is revealed when the "Settings" button is clicked. -->
-    <div id="divSettings" hidden>
-      <h2>Settings</h2>
+    <div id="divSettings" class="container-fluid mt-3" hidden>
+      <div class="row">
+        <div class="col-sm-3 pe-3">
+          <h1>Settings</h1>
 
-      <p>
-        <button id="btnSettingsSave">Save</button>
-        <button id="btnSettingsCancel">Cancel</button>
-      </p>
+          <button id="btnSettingsSave" class="btn btn-primary mb-2">
+            Save
+          </button>
+          <br />
+          <button id="btnSettingsCancel" class="btn btn-secondary mb-2">
+            Cancel
+          </button>
+        </div>
 
-      <h3>General Settings</h3>
-      <p>
-        <input id="chkDebugLogging" type="checkbox" />
-        <label for="chkDebugLogging">Firestore Debug Logging</label>
-      </p>
+        <div class="col-lg-9">
+          <h3>Debug Logging</h3>
+          <p>
+            <input id="chkDebugLogging" type="checkbox" />
+            <label for="chkDebugLogging">Firestore Debug Logging Enabled</label>
+          </p>
 
-      <h3>Firestore Host</h3>
-      <table>
-        <tr
-          onclick="document.getElementById('radFirestoreHostProd').checked = true;"
-        >
-          <td>
-            <input
-              name="FirestoreHost"
-              id="radFirestoreHostProd"
-              type="radio"
-            />
-            <label for="radFirestoreHostProd">
-              <span data-dynamic-replace="HOST_LABEL_PROD">Production</span>
-            </label>
-          </td>
-          <td>
-            <span data-dynamic-replace="HOST_NAME_PROD"></span>
-          </td>
-        </tr>
-        <tr
-          onclick="document.getElementById('radFirestoreHostEmulator').checked = true;"
-        >
-          <td>
-            <input
-              name="FirestoreHost"
-              id="radFirestoreHostEmulator"
-              type="radio"
-            />
-            <label for="radFirestoreHostEmulator">
-              <span data-dynamic-replace="HOST_LABEL_EMULATOR">Emulator</span>
-            </label>
-          </td>
-          <td>
-            <span data-dynamic-replace="HOST_NAME_EMULATOR"></span>
-          </td>
-        </tr>
-        <tr
-          onclick="document.getElementById('radFirestoreHostNightly').checked = true;"
-        >
-          <td>
-            <input
-              name="FirestoreHost"
-              id="radFirestoreHostNightly"
-              type="radio"
-            />
-            <label for="radFirestoreHostNightly">
-              <span data-dynamic-replace="HOST_LABEL_NIGHTLY">Nightly</span>
-            </label>
-          </td>
-          <td>
-            <span data-dynamic-replace="HOST_NAME_NIGHTLY"></span>
-          </td>
-        </tr>
-        <tr
-          onclick="document.getElementById('radFirestoreHostQA').checked = true;"
-        >
-          <td>
-            <input name="FirestoreHost" id="radFirestoreHostQA" type="radio" />
-            <label for="radFirestoreHostQA">
-              <span data-dynamic-replace="HOST_LABEL_QA">QA</span>
-            </label>
-          </td>
-          <td>
-            <span data-dynamic-replace="HOST_NAME_QA"></span>
-          </td>
-        </tr>
-      </table>
+          <h3>Firestore Host</h3>
 
-      <h3>Advanced Settings</h3>
-      <table>
-        <tr>
-          <td><label for="txtProjectId">Project ID:</label></td>
-          <td><input id="txtProjectId" type="text" /></td>
-        </tr>
-        <tr>
-          <td><label for="txtApiKey">API Key:</label></td>
-          <td><input id="txtApiKey" type="text" /></td>
-        </tr>
-      </table>
+          <table class="table table-hover">
+            <tr
+              onclick="document.getElementById('radFirestoreHostProd').checked = true;"
+            >
+              <td>
+                <input
+                  name="FirestoreHost"
+                  id="radFirestoreHostProd"
+                  type="radio"
+                />
+                <label for="radFirestoreHostProd">
+                  <span data-dynamic-replace="HOST_LABEL_PROD">Production</span>
+                </label>
+              </td>
+              <td>
+                <span data-dynamic-replace="HOST_NAME_PROD"></span>
+              </td>
+            </tr>
+            <tr
+              onclick="document.getElementById('radFirestoreHostEmulator').checked = true;"
+            >
+              <td>
+                <input
+                  name="FirestoreHost"
+                  id="radFirestoreHostEmulator"
+                  type="radio"
+                />
+                <label for="radFirestoreHostEmulator">
+                  <span data-dynamic-replace="HOST_LABEL_EMULATOR"
+                    >Emulator</span
+                  >
+                </label>
+              </td>
+              <td>
+                <span data-dynamic-replace="HOST_NAME_EMULATOR"></span>
+              </td>
+            </tr>
+            <tr
+              onclick="document.getElementById('radFirestoreHostNightly').checked = true;"
+            >
+              <td>
+                <input
+                  name="FirestoreHost"
+                  id="radFirestoreHostNightly"
+                  type="radio"
+                />
+                <label for="radFirestoreHostNightly">
+                  <span data-dynamic-replace="HOST_LABEL_NIGHTLY">Nightly</span>
+                </label>
+              </td>
+              <td>
+                <span data-dynamic-replace="HOST_NAME_NIGHTLY"></span>
+              </td>
+            </tr>
+            <tr
+              onclick="document.getElementById('radFirestoreHostQA').checked = true;"
+            >
+              <td>
+                <input
+                  name="FirestoreHost"
+                  id="radFirestoreHostQA"
+                  type="radio"
+                />
+                <label for="radFirestoreHostQA">
+                  <span data-dynamic-replace="HOST_LABEL_QA">QA</span>
+                </label>
+              </td>
+              <td>
+                <span data-dynamic-replace="HOST_NAME_QA"></span>
+              </td>
+            </tr>
+          </table>
+
+          <h3>Advanced Settings</h3>
+          <table>
+            <tr>
+              <td><label for="txtProjectId">Project ID:</label></td>
+              <td><input id="txtProjectId" type="text" /></td>
+            </tr>
+            <tr>
+              <td><label for="txtApiKey">API Key:</label></td>
+              <td><input id="txtApiKey" type="text" /></td>
+            </tr>
+          </table>
+        </div>
+      </div>
     </div>
 
     <div class="alert alert-danger" role="alert" id="divScriptLoadError" hidden>

@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-export type LogFunction = (message: string, options: unknown) => void;
+export interface LogMessage {
+  text: string;
+  timestamp: string;
+  options?: unknown;
+}
+
+export type LogFunction = (message: LogMessage) => void;
 
 /**
  * The underlying log function used by `log()`, and set by `setLogFunction()`.
@@ -51,7 +57,11 @@ export function log(message: string, options?: unknown): void {
   if (gLogFunction === null) {
     throw new Error('setLogFunction() has not yet been invoked');
   }
-  gLogFunction(`${elapsedTimeStr()} ${message}`, options);
+  gLogFunction({
+    text: message,
+    timestamp: elapsedTimeStr(),
+    options
+  });
 }
 
 /** Resets the start time so that the next call to `log()` will start at t=0. */

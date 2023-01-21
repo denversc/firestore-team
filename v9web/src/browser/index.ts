@@ -40,6 +40,8 @@ import {
   load as loadUi,
   MainUi,
   MainUiCallbacks,
+  LoggingUi,
+  LoggingUiCallbacks,
   SettingsUi,
   SettingsUiCallbacks,
   SettingsUiValues
@@ -122,12 +124,6 @@ class MainUiCallbacksImpl implements MainUiCallbacks {
     this.cancellationTokenSource?.cancel();
   }
 
-  clearLogs(): void {
-    this.ui.clearLogOutput();
-    this.ui.setClearLogsButtonVisible(false);
-    resetStartTime();
-  }
-
   runTest(): void {
     if (this.cancellationTokenSource) {
       this.cancellationTokenSource.cancel();
@@ -139,6 +135,16 @@ class MainUiCallbacksImpl implements MainUiCallbacks {
 
   showSettings(): void {
     window.location.hash = '#settings';
+  }
+}
+
+class LoggingUiCallbacksImpl implements LoggingUiCallbacks {
+  constructor(private readonly ui: LoggingUi) {}
+
+  clearLogs(): void {
+    this.ui.clearLogOutput();
+    this.ui.setClearLogsButtonVisible(false);
+    resetStartTime();
   }
 }
 
@@ -266,10 +272,11 @@ function initialize(): void {
   setHasher(new Md5());
   setBase64Encode(btoa);
 
-  const { main: mainUi, settings: settingsUi } = loadUi();
-  initializeLogging(mainUi);
+  const { main: mainUi, logging: loggingUi, settings: settingsUi } = loadUi();
+  initializeLogging(loggingUi);
   initializeDynamicReplaceSpanTexts(loadSpanTextByDynamicReplaceKeyMap());
   mainUi.registerCallbacks(new MainUiCallbacksImpl(mainUi));
+  loggingUi.registerCallbacks(new LoggingUiCallbacksImpl(loggingUi));
   settingsUi.registerCallbacks(new SettingsUiCallbacksImpl());
 
   window.onhashchange = () => handleWindowHashChange(mainUi, settingsUi);

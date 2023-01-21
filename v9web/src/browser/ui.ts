@@ -19,6 +19,7 @@ import { FirestoreHost } from '../common/util';
 /** The HTML elements in the UI with which this application interacts. */
 interface HtmlElements {
   main: MainHtmlElements;
+  logging: LoggingHtmlElements;
   settings: SettingsHtmlElements;
 }
 
@@ -28,11 +29,22 @@ interface MainHtmlElements {
   buttons: {
     runTest: HTMLButtonElement;
     cancelTest: HTMLButtonElement;
-    clearLogs: HTMLButtonElement;
     settings: HTMLButtonElement;
   };
+}
 
-  logOutput: HTMLPreElement;
+interface LoggingHtmlElements {
+  buttons: {
+    clearLogs: HTMLButtonElement;
+  };
+
+  lines: HTMLElement;
+
+  lineTemplate: {
+    element: HTMLElement;
+    timestamp: HTMLElement;
+    message: HTMLElement;
+  };
 }
 
 interface SettingsHtmlElements {
@@ -61,7 +73,7 @@ class HtmlElementNotFoundError extends Error {
   readonly name = 'HtmlElementNotFoundError';
 }
 
-function loadElement<T extends HTMLElement>(id: string): T {
+function loadElement<T extends HTMLElement = HTMLElement>(id: string): T {
   const element = document.getElementById(id);
   if (!element) {
     throw new HtmlElementNotFoundError(`HTML element with ID not found: ${id}`);
@@ -76,10 +88,20 @@ function loadHtmlElements(): HtmlElements {
       buttons: {
         runTest: loadElement<HTMLButtonElement>('btnRunTest'),
         cancelTest: loadElement<HTMLButtonElement>('btnCancelTest'),
-        clearLogs: loadElement<HTMLButtonElement>('btnClearLogs'),
         settings: loadElement<HTMLButtonElement>('btnSettings')
+      }
+    },
+
+    logging: {
+      buttons: {
+        clearLogs: loadElement<HTMLButtonElement>('btnClearLogs')
       },
-      logOutput: loadElement<HTMLPreElement>('logOutput')
+      lines: loadElement<HTMLButtonElement>('logLines'),
+      lineTemplate: {
+        element: loadElement<HTMLDivElement>('logLineTemplate'),
+        timestamp: loadElement('logLineTimestamp'),
+        message: loadElement('logLineMessage')
+      }
     },
 
     settings: {
@@ -105,11 +127,18 @@ function loadHtmlElements(): HtmlElements {
   };
 }
 
+export interface Ui {
+  main: MainUi;
+  logging: LoggingUi;
+  settings: SettingsUi;
+}
+
 /** Loads the user interface elements. */
-export function load(): { main: MainUi; settings: SettingsUi } {
+export function load(): Ui {
   const htmlElements = loadHtmlElements();
   return {
     main: MainUi[CREATE](htmlElements.main),
+    logging: LoggingUi[CREATE](htmlElements.logging),
     settings: SettingsUi[CREATE](htmlElements.settings)
   };
 }
@@ -243,8 +272,11 @@ export class SettingsUi {
 export interface MainUiCallbacks {
   runTest(): void;
   cancelTest(): void;
-  clearLogs(): void;
   showSettings(): void;
+}
+
+export interface LoggingUiCallbacks {
+  clearLogs(): void;
 }
 
 export class MainUi {
@@ -254,10 +286,9 @@ export class MainUi {
     return new MainUi(ui);
   }
 
-  registerCallbacks(callbacks: MainUiCallbacks) {
+  registerCallbacks(callbacks: MainUiCallbacks): void {
     this.ui.buttons.runTest.onclick = () => callbacks.runTest();
     this.ui.buttons.cancelTest.onclick = () => callbacks.cancelTest();
-    this.ui.buttons.clearLogs.onclick = () => callbacks.clearLogs();
     this.ui.buttons.settings.onclick = () => callbacks.showSettings();
   }
 
@@ -269,27 +300,41 @@ export class MainUi {
     this.ui.buttons.cancelTest.disabled = !enabled;
   }
 
-  setClearLogsButtonVisible(visible: boolean): void {
-    this.ui.buttons.clearLogs.hidden = !visible;
-  }
-
-  clearLogOutput(): void {
-    this.ui.logOutput.textContent = '';
-  }
-
-  appendToLogOutput(text: string): void {
-    if (!this.ui.logOutput.textContent) {
-      this.ui.logOutput.textContent = text;
-    } else {
-      this.ui.logOutput.textContent += '\n' + text;
-    }
-  }
-
   show(): void {
     this.ui.div.hidden = false;
   }
 
   hide(): void {
     this.ui.div.hidden = true;
+  }
+}
+
+export class LoggingUi {
+  private constructor(private readonly ui: LoggingHtmlElements) {}
+
+  static [CREATE](ui: LoggingHtmlElements): LoggingUi {
+    return new LoggingUi(ui);
+  }
+
+  registerCallbacks(callbacks: LoggingUiCallbacks): void {
+    this.ui.buttons.clearLogs.onclick = () => callbacks.clearLogs();
+  }
+
+  setClearLogsButtonVisible(visible: boolean): void {
+    this.ui.buttons.clearLogs.hidden = !visible;
+  }
+
+  clearLogOutput(): void {
+    this.ui.lines.innerHTML = '';
+  }
+
+  appendToLogOutput(message: string, timestamp: string): void {
+    this.ui.lineTemplate.timestamp.innerText = timestamp;
+    this.ui.lineTemplate.message.innerText = message;
+    const logLineElement = this.ui.lineTemplate.element.cloneNode(
+      /*deep=*/ true
+    ) as HTMLElement;
+    logLineElement.hidden = false;
+    this.ui.lines.appendChild(logLineElement);
   }
 }

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { setLogFunction } from '../common/logging.js';
+import { LogMessage, setLogFunction } from '../common/logging.js';
 
 // The function to use to perform logging in node.
-function nodeLog(message: string, options: unknown): void {
-  console.log(message);
+function nodeLog(message: LogMessage): void {
+  console.log(`${message.timestamp} ${message.text}`);
 }
 
 // Initialize the logging framework with node logging.
