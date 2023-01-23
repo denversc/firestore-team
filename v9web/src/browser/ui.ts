@@ -330,11 +330,38 @@ export class LoggingUi {
 
   appendToLogOutput(message: string, timestamp: string): void {
     this.ui.lineTemplate.timestamp.innerText = timestamp;
-    this.ui.lineTemplate.message.innerText = message;
+    this.ui.lineTemplate.message.innerText =
+      htmlTextPreservingLeadingSpaces(message);
     const logLineElement = this.ui.lineTemplate.element.cloneNode(
       /*deep=*/ true
     ) as HTMLElement;
     logLineElement.hidden = false;
     this.ui.lines.appendChild(logLineElement);
   }
+}
+
+function htmlTextPreservingLeadingSpaces(text: string): string {
+  let chars: Array<string> = [];
+  let i = 0;
+  let hasSeenNonSpaceOnLine = false;
+  while (i < text.length) {
+    const c = text[i];
+    i++;
+
+    if (c === '\n') {
+      chars.push(c);
+      hasSeenNonSpaceOnLine = false;
+      continue;
+    }
+
+    if (c === ' ' && !hasSeenNonSpaceOnLine) {
+      chars.push('\u00A0');
+      continue;
+    }
+
+    hasSeenNonSpaceOnLine = true;
+    chars.push(c);
+  }
+
+  return chars.join('');
 }
