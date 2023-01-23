@@ -21,7 +21,8 @@ import {
   DocumentData,
   DocumentReference,
   CollectionReference,
-  Firestore
+  Firestore,
+  WriteBatch
 } from '@firebase/firestore';
 
 import { log } from './logging.js';
@@ -120,6 +121,22 @@ export async function createDocument<T extends DocumentSpecs>(
  * Creates documents in the given Firestore collection.
  *
  * @param collectionRef The collection in which to create the documents.
+ * @param documentCreateCount the number of documents to create.
+ * @param documentData the data with which to populate the documents; if omitted
+ * or undefined, then choose some random data that will be the same in every
+ * document.
+ * @return the created documents, sorted by their name.
+ */
+export async function createDocuments(
+  collectionRef: CollectionReference,
+  documentCreateCount: number,
+  documentData?: DocumentData
+): Promise<Array<DocumentReference>>;
+
+/**
+ * Creates documents in the given Firestore collection.
+ *
+ * @param collectionRef The collection in which to create the documents.
  * @param documentSpecs the documents to create.
  * @return the created documents; this object will have the same keys as the
  * given `documentSpecs` object, but with the corresponding `DocumentReference`
@@ -128,8 +145,31 @@ export async function createDocument<T extends DocumentSpecs>(
 export async function createDocuments<T extends DocumentSpecs>(
   collectionRef: CollectionReference,
   documentSpecs: T
+): Promise<CreatedDocuments<T>>;
+
+export function createDocuments<T extends DocumentSpecs>(
+  collectionRef: CollectionReference,
+  documentSpecsOrDocumentCreateCount: T | number,
+  documentData?: DocumentData
+): Promise<CreatedDocuments<T>> | Promise<Array<DocumentReference>> {
+  if (typeof documentSpecsOrDocumentCreateCount === 'number') {
+    return createDocumentsFromDocumentCreateCount(
+      collectionRef,
+      documentSpecsOrDocumentCreateCount,
+      documentData
+    );
+  } else {
+    return createDocumentsFromDocumentSpecs(
+      collectionRef,
+      documentSpecsOrDocumentCreateCount
+    );
+  }
+}
+
+async function createDocumentsFromDocumentSpecs<T extends DocumentSpecs>(
+  collectionRef: CollectionReference,
+  documentSpecs: T
 ): Promise<CreatedDocuments<T>> {
-  const writeBatch_ = writeBatch(collectionRef.firestore as any);
   const createdDocuments = Object.fromEntries(
     Object.entries(documentSpecs).map(([documentId, _]) => [
       documentId,
@@ -137,19 +177,86 @@ export async function createDocuments<T extends DocumentSpecs>(
     ])
   ) as CreatedDocuments<T>;
 
-  for (const [documentId, documentData] of Object.entries(documentSpecs)) {
-    const documentRef = createdDocuments[documentId];
-    log(
-      `Creating document ${documentRef.path} with contents: ${JSON.stringify(
-        documentData
-      )}`
-    );
-    writeBatch_.set(documentRef, documentData);
-  }
-
-  await writeBatch_.commit();
+  await performWritesInBatches(
+    collectionRef.firestore,
+    Object.entries(documentSpecs),
+    (writeBatch_, [documentId, documentData]) => {
+      const documentRef = createdDocuments[documentId];
+      log(
+        `Creating document ${documentRef.path} with contents: ${JSON.stringify(
+          documentData
+        )}`
+      );
+      writeBatch_.set(documentRef, documentData);
+    }
+  );
 
   return createdDocuments;
+}
+
+async function createDocumentsFromDocumentCreateCount<T extends DocumentSpecs>(
+  collectionRef: CollectionReference,
+  documentCreateCount: number,
+  documentData?: DocumentData
+): Promise<Array<DocumentReference>> {
+  const documentRefs: Array<DocumentReference> = [];
+  for (let i = 0; i < documentCreateCount; i++) {
+    documentRefs.push(doc(collectionRef));
+  }
+  documentRefs.sort((docRef1, docRef2) => docRef1.id.localeCompare(docRef2.id));
+
+  let nextDocumentNumber = 1;
+
+  await performWritesInBatches(
+    collectionRef.firestore,
+    documentRefs,
+    (writeBatch_, documentRef) => {
+      let documentDataForCurrentDocument = documentData ?? {
+        sampleKey: 42,
+        docNumber: nextDocumentNumber
+      };
+      nextDocumentNumber++;
+      log(
+        `Creating document ${documentRef.path} with contents: ${JSON.stringify(
+          documentDataForCurrentDocument
+        )}`
+      );
+      writeBatch_.set(documentRef, documentDataForCurrentDocument);
+    }
+  );
+
+  return documentRefs;
+}
+
+function performWritesInBatches<T>(
+  db: Firestore,
+  items: Array<T>,
+  callback: (writeBatch_: WriteBatch, item: T) => void
+): Promise<unknown> {
+  const writeBatches: Array<WriteBatch> = [];
+  let writeBatch_: WriteBatch | null = null;
+  let currentWriteBatchWriteCount = 0;
+
+  for (const item of items) {
+    if (writeBatch_ === null) {
+      writeBatch_ = writeBatch(db);
+      currentWriteBatchWriteCount = 0;
+    }
+
+    callback(writeBatch_, item);
+    currentWriteBatchWriteCount++;
+
+    if (currentWriteBatchWriteCount === 500) {
+      writeBatches.push(writeBatch_);
+      writeBatch_ = null;
+    }
+  }
+
+  if (writeBatch_ !== null) {
+    writeBatches.push(writeBatch_);
+  }
+
+  return Promise.all(writeBatches.map(batch => batch.commit()));
 }
 
 /**
